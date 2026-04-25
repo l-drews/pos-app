@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQuery } from "@pinia/colada";
+import { Search, ArrowDownToLine, ArrowUpFromLine, Check, ChevronsUpDown } from "lucide-vue-next";
 
 defineProps<{
   title: string;
@@ -20,6 +21,7 @@ const transactionType = ref<"deposit" | "withdraw">("deposit");
 const searchString = ref("");
 const selectedUser = ref<{ uuid: string; firstName: string; lastName: string; group?: { name: string } | null } | null>(null);
 const amount = ref(0);
+const comboOpen = ref(false);
 
 const filteredUsers = computed(() => {
   if (!users.value) return [];
@@ -29,7 +31,7 @@ const filteredUsers = computed(() => {
   );
 });
 
-function userFormatter(user: any) {
+function userLabel(user: any) {
   if (user.group) {
     return `${user.firstName} ${user.lastName} - ${user.group.name}`;
   }
@@ -44,6 +46,11 @@ watch(active, (val) => {
     amount.value = 0;
   }
 });
+
+function selectUser(user: any) {
+  selectedUser.value = user;
+  comboOpen.value = false;
+}
 
 function onCancel() {
   active.value = false;
@@ -63,46 +70,66 @@ function onConfirm() {
 </script>
 
 <template>
-  <o-modal v-model:active="active" scroll="clip" :can-cancel="false">
-    <div class="p-4">
-      <div class="pb-4">
-        <h5>{{ title }}</h5>
-      </div>
-      <div class="pb-4">
-        <o-field grouped label="User">
-          <o-autocomplete
-            v-model="searchString"
-            :custom-formatter="userFormatter"
-            expanded
-            :data="filteredUsers"
-            placeholder="User"
-            icon="magnify"
-            clearable
-            @select="(user: any) => (selectedUser = user)"
-          >
-            <template #empty>No results found</template>
-          </o-autocomplete>
-        </o-field>
-        <o-field grouped label="Type">
-          <o-tabs v-model="transactionType" expanded type="toggle">
-            <o-tab-item label="Deposit" value="deposit" icon="download" />
-            <o-tab-item label="Withdraw" value="withdraw" icon="upload" />
-          </o-tabs>
-        </o-field>
-        <o-field grouped label="Amount">
+  <Dialog :open="active" @update:open="active = $event">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{{ title }}</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid gap-2">
+          <Label>User</Label>
+          <Popover v-model:open="comboOpen">
+            <PopoverTrigger as-child>
+              <Button variant="outline" role="combobox" class="justify-between w-full">
+                <span class="truncate">{{ selectedUser ? userLabel(selectedUser) : "Select a user..." }}</span>
+                <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent class="w-full p-0" align="start">
+              <Command>
+                <CommandInput v-model="searchString" placeholder="Search user..." />
+                <CommandEmpty>No users found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      v-for="u in filteredUsers"
+                      :key="u.uuid"
+                      :value="userLabel(u)"
+                      @select="selectUser(u)"
+                    >
+                      <Check class="mr-2 size-4" :class="selectedUser?.uuid === u.uuid ? 'opacity-100' : 'opacity-0'" />
+                      {{ userLabel(u) }}
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div class="grid gap-2">
+          <Label>Type</Label>
+          <Tabs v-model="transactionType" class="w-full">
+            <TabsList class="grid w-full grid-cols-2">
+              <TabsTrigger value="deposit" class="flex items-center gap-1">
+                <ArrowDownToLine class="size-4" />
+                Deposit
+              </TabsTrigger>
+              <TabsTrigger value="withdraw" class="flex items-center gap-1">
+                <ArrowUpFromLine class="size-4" />
+                Withdraw
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+        <div class="grid gap-2">
+          <Label>Amount</Label>
           <CurrencyInput v-model="amount" />
-        </o-field>
+        </div>
       </div>
-      <div class="flex flex-row justify-end gap-x-2">
-        <o-button @click="onCancel()">{{ cancelText ?? "Cancel" }}</o-button>
-        <o-button @click="onConfirm()">{{ confirmText ?? "Save" }}</o-button>
-      </div>
-    </div>
-  </o-modal>
+      <DialogFooter>
+        <Button variant="outline" @click="onCancel()">{{ cancelText ?? "Cancel" }}</Button>
+        <Button @click="onConfirm()">{{ confirmText ?? "Save" }}</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
-
-<style scoped>
-:deep() .o-tabs__content {
-  display: none;
-}
-</style>

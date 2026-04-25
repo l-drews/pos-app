@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { Pencil, Trash2, RefreshCw } from "lucide-vue-next";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
@@ -64,43 +65,61 @@ function refresh() {
 </script>
 
 <template>
-  <section class="container mx-auto p-4 bg-white rounded">
-    <o-modal v-model:active="inputForm" scroll="clip" :can-cancel="false">
-      <div class="p-4">
-        <div class="pb-4">
-          <h5>{{ selected ? "Edit group" : "Add group" }}</h5>
+  <section class="container mx-auto p-4">
+    <Dialog :open="inputForm" @update:open="inputForm = $event">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{{ selected ? "Edit group" : "Add group" }}</DialogTitle>
+        </DialogHeader>
+        <div class="grid gap-4 py-4">
+          <div class="grid gap-2">
+            <Label for="group-name">Name</Label>
+            <Input id="group-name" v-model="editName" placeholder="Group name" />
+          </div>
         </div>
-        <div class="pb-4">
-          <o-field grouped label="Name">
-            <o-input v-model="editName" placeholder="Group name" expanded />
-          </o-field>
-        </div>
-        <div class="flex flex-row justify-end gap-x-2">
-          <o-button @click="inputForm = false">Cancel</o-button>
-          <o-button @click="saveGroup()">Save</o-button>
-        </div>
-      </div>
-    </o-modal>
+        <DialogFooter>
+          <Button variant="outline" @click="inputForm = false">Cancel</Button>
+          <Button @click="saveGroup()">Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     <ConfirmDialog v-model:active="confirmDialog" @on-confirm="deleteItem" />
 
     <div class="flex justify-between items-center pb-4">
-      <o-button @click.stop="showAddDialog()">Add group</o-button>
-      <o-button icon-right="refresh" @click="refresh()" />
+      <Button @click.stop="showAddDialog()">Add group</Button>
+      <Button variant="outline" size="icon" @click="refresh()">
+        <RefreshCw class="size-4" />
+      </Button>
     </div>
 
-    <o-table :data="groups ?? []" :loading="isLoading">
-      <template #empty>
-        <div class="m-4 text-center">No groups found</div>
-      </template>
-      <o-table-column v-slot="props" field="name" label="Group Name" sortable>
-        {{ props.row.name }}
-      </o-table-column>
-      <o-table-column v-slot="props" width="80">
-        <div class="float-right">
-          <o-icon clickable class="w-6 h-6" icon="pencil" @click.stop="showEditDialog(props.row)" />
-          <o-icon clickable class="w-6 h-6" icon="delete" @click.stop="showConfirmDialog(props.row)" />
-        </div>
-      </o-table-column>
-    </o-table>
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Group Name</TableHead>
+            <TableHead class="w-20 text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="isLoading">
+            <TableCell colspan="2" class="text-center">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-else-if="!groups?.length">
+            <TableCell colspan="2" class="text-center">No groups found</TableCell>
+          </TableRow>
+          <TableRow v-for="group in groups" :key="group.uuid">
+            <TableCell>{{ group.name }}</TableCell>
+            <TableCell class="text-right">
+              <Button variant="ghost" size="icon" @click.stop="showEditDialog(group)">
+                <Pencil class="size-4" />
+              </Button>
+              <Button variant="ghost" size="icon" @click.stop="showConfirmDialog(group)">
+                <Trash2 class="size-4" />
+              </Button>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   </section>
 </template>

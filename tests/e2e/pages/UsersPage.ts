@@ -12,19 +12,19 @@ export class UsersPage extends BasePage {
 
   async addUser(firstName: string, lastName: string) {
     await this.clickButton("Add user");
-    await this.page.waitForSelector(".o-modal__content");
-    const modal = this.page.locator(".o-modal__content");
-    const nameFields = modal.locator('.o-field').filter({ hasText: 'Name' }).locator('input');
-    await nameFields.nth(0).fill(firstName);
-    await nameFields.nth(1).fill(lastName);
+    await this.page.waitForSelector('[role="dialog"]');
+    const dialog = this.page.locator('[role="dialog"]');
+    await dialog.getByLabel("First Name").fill(firstName);
+    await dialog.getByLabel("Last Name").fill(lastName);
     await this.clickButton("Save");
     await this.waitForTableLoad();
   }
 
   async deleteUser(rowIndex: number) {
-    const row = this.page.locator(".o-table tbody .o-table__tr").nth(rowIndex);
-    await row.locator(".mdi-delete").click();
-    await this.page.waitForSelector(".o-modal__content");
+    const row = this.page.locator("table tbody tr").nth(rowIndex);
+    const buttons = row.getByRole("button");
+    await buttons.nth(1).click(); // delete button
+    await this.page.waitForSelector('[role="alertdialog"]');
     await this.clickButton("Confirm");
     await this.waitForTableLoad();
   }

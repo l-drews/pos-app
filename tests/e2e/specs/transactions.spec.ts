@@ -17,7 +17,7 @@ test.describe("Transactions page", () => {
 
   test("should open create transaction form", async ({ page }) => {
     await transactionsPage.createTransaction();
-    await expect(page.locator(".o-modal__content")).toBeVisible();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
   });
 
   test("should list transactions", async () => {

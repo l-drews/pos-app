@@ -19,6 +19,6 @@ test.describe("Shop page", () => {
   });
 
   test("should display cart table", async ({ page }) => {
-    await expect(page.locator(".o-table")).toBeVisible();
+    await expect(page.locator("table")).toBeVisible();
   });
 });

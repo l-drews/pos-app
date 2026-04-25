@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useQueryCache } from "@pinia/colada";
+import { RefreshCw } from "lucide-vue-next";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
@@ -12,27 +13,38 @@ function refresh() {
 </script>
 
 <template>
-  <section class="container mx-auto p-4 bg-white rounded">
+  <section class="container mx-auto p-4">
     <div class="flex justify-end items-center pb-4">
-      <o-button icon-right="refresh" @click="refresh()" />
+      <Button variant="outline" size="icon" @click="refresh()">
+        <RefreshCw class="size-4" />
+      </Button>
     </div>
 
-    <o-table :data="orders ?? []" :loading="isLoading" paginated per-page="15">
-      <template #empty>
-        <div class="m-4 text-center">No orders found</div>
-      </template>
-      <o-table-column v-slot="props" field="user" label="User" sortable>
-        {{ props.row.user?.firstName }} {{ props.row.user?.lastName }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="itemCount" label="Items" sortable>
-        {{ props.row.items?.length ?? 0 }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="amount" label="Amount" sortable>
-        {{ formatCents(props.row.amount ?? 0) }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="createdAt" label="Date" sortable>
-        {{ props.row.createdAt }}
-      </o-table-column>
-    </o-table>
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="isLoading">
+            <TableCell colspan="4" class="text-center">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-else-if="!orders?.length">
+            <TableCell colspan="4" class="text-center">No orders found</TableCell>
+          </TableRow>
+          <TableRow v-for="order in orders" :key="(order as any).uuid">
+            <TableCell>{{ (order as any).user?.firstName }} {{ (order as any).user?.lastName }}</TableCell>
+            <TableCell>{{ (order as any).items?.length ?? 0 }}</TableCell>
+            <TableCell>{{ formatCents((order as any).amount ?? 0) }}</TableCell>
+            <TableCell>{{ (order as any).createdAt }}</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   </section>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { Pencil, Trash2, RefreshCw } from "lucide-vue-next";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
@@ -55,7 +56,7 @@ function refresh() {
 </script>
 
 <template>
-  <section class="container mx-auto p-4 bg-white rounded">
+  <section class="container mx-auto p-4">
     <ProductForm
       v-model:active="inputForm"
       title="Add product"
@@ -68,29 +69,44 @@ function refresh() {
     />
 
     <div class="flex justify-between items-center pb-4">
-      <o-button @click.stop="showForm(null)">Add product</o-button>
-      <o-button icon-right="refresh" @click="refresh()" />
+      <Button @click.stop="showForm(null)">Add product</Button>
+      <Button variant="outline" size="icon" @click="refresh()">
+        <RefreshCw class="size-4" />
+      </Button>
     </div>
 
-    <o-table :data="products ?? []" :loading="isLoading">
-      <template #empty>
-        <div class="m-4 text-center">No products found</div>
-      </template>
-      <o-table-column v-slot="props" field="name" label="Name" sortable>
-        {{ props.row.name }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="barcode" label="Barcode" sortable>
-        {{ props.row.barcode }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="price" label="Price" sortable>
-        {{ formatCents(props.row.price) }}
-      </o-table-column>
-      <o-table-column v-slot="props" width="80">
-        <div class="float-right">
-          <o-icon clickable class="w-6 h-6" icon="pencil" @click.stop="showForm(props.row)" />
-          <o-icon clickable class="w-6 h-6" icon="delete" @click.stop="showConfirmDialog(props.row)" />
-        </div>
-      </o-table-column>
-    </o-table>
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Barcode</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead class="w-20 text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="isLoading">
+            <TableCell colspan="4" class="text-center">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-else-if="!products?.length">
+            <TableCell colspan="4" class="text-center">No products found</TableCell>
+          </TableRow>
+          <TableRow v-for="product in products" :key="product.uuid">
+            <TableCell>{{ product.name }}</TableCell>
+            <TableCell>{{ product.barcode }}</TableCell>
+            <TableCell>{{ formatCents(product.price) }}</TableCell>
+            <TableCell class="text-right">
+              <Button variant="ghost" size="icon" @click.stop="showForm(product)">
+                <Pencil class="size-4" />
+              </Button>
+              <Button variant="ghost" size="icon" @click.stop="showConfirmDialog(product)">
+                <Trash2 class="size-4" />
+              </Button>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   </section>
 </template>

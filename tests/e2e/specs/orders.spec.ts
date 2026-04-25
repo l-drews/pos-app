@@ -10,7 +10,7 @@ test.describe("Orders page", () => {
   });
 
   test("should display orders page with table", async ({ page }) => {
-    await expect(page.locator(".o-table")).toBeVisible();
+    await expect(page.locator("table")).toBeVisible();
   });
 
   test("should list orders", async () => {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQuery } from "@pinia/colada";
+import { ImagePlus } from "lucide-vue-next";
 
 interface User {
   uuid?: string;
@@ -39,9 +40,9 @@ const user = ref<User>({
   generateBarcode: true,
 });
 
-const date = ref<Date | null>(null);
 const image = ref<File | null>(null);
 const preview = ref<string | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 watch(active, (val) => {
   if (val) {
@@ -57,9 +58,6 @@ watch(active, (val) => {
         generateBarcode: false,
         barcode: props.selected.barcode,
       };
-      date.value = props.selected.birthDate
-        ? new Date(props.selected.birthDate)
-        : null;
     } else {
       user.value = {
         firstName: "",
@@ -69,15 +67,7 @@ watch(active, (val) => {
         roleUuid: null,
         generateBarcode: true,
       };
-      date.value = null;
     }
-  }
-});
-
-watch(date, (val) => {
-  if (val) {
-    const d = new Date(val.getTime() - val.getTimezoneOffset() * 60000);
-    user.value.birthDate = d.toISOString().split("T")[0];
   }
 });
 
@@ -95,6 +85,11 @@ watch(image, (val) => {
 
 const defaultImageUrl = "/images/default-avatar.png";
 
+function onFileSelect(e: Event) {
+  const files = (e.target as HTMLInputElement).files;
+  if (files?.length) image.value = files[0];
+}
+
 function onCancel() {
   active.value = false;
   emit("on-cancel");
@@ -111,62 +106,84 @@ function onConfirm() {
 </script>
 
 <template>
-  <o-modal v-model:active="active" scroll="clip" :can-cancel="false">
-    <div class="p-4">
-      <div class="pb-4">
-        <h5>{{ title }}</h5>
-      </div>
-      <div>
-        <div class="flex flex-row items-center justify-evenly">
+  <Dialog :open="active" @update:open="active = $event">
+    <DialogContent class="sm:max-w-lg">
+      <DialogHeader>
+        <DialogTitle>{{ title }}</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="flex items-center justify-evenly">
           <img
-            class="h-32 aspect-square object-cover rounded-full border border-inherit drop-shadow"
+            class="h-24 w-24 object-cover rounded-full border"
             :src="preview ?? defaultImageUrl"
           />
-          <o-upload v-model="image" accept="image/*">
-            <o-button tag="a" variant="primary" icon-left="image">
+          <div>
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="onFileSelect"
+            />
+            <Button variant="outline" @click="fileInput?.click()">
+              <ImagePlus class="mr-2 size-4" />
               Select image
-            </o-button>
-          </o-upload>
+            </Button>
+          </div>
         </div>
-        <o-field grouped label="Name">
-          <o-input v-model="user.firstName" placeholder="First Name" expanded />
-          <o-input v-model="user.lastName" placeholder="Last Name" expanded />
-        </o-field>
-        <o-field grouped label="Select a date">
-          <o-datepicker
-            v-model="date"
-            locale="en-CA"
-            placeholder="Click to select..."
-            icon="calendar"
-            trap-focus
+        <div class="grid grid-cols-2 gap-4">
+          <div class="grid gap-2">
+            <Label for="user-first-name">First Name</Label>
+            <Input id="user-first-name" v-model="user.firstName" placeholder="First Name" />
+          </div>
+          <div class="grid gap-2">
+            <Label for="user-last-name">Last Name</Label>
+            <Input id="user-last-name" v-model="user.lastName" placeholder="Last Name" />
+          </div>
+        </div>
+        <div class="grid gap-2">
+          <Label for="user-birthdate">Date of Birth</Label>
+          <Input id="user-birthdate" v-model="user.birthDate" type="date" />
+        </div>
+        <div class="flex items-center gap-2">
+          <Switch
+            :checked="user.generateBarcode"
+            :disabled="!!user.barcode"
+            @update:checked="user.generateBarcode = $event"
           />
-        </o-field>
-        <o-field grouped label="Barcode">
-          <o-field>
-            <o-switch v-model="user.generateBarcode" :disabled="!!user.barcode">
-              <p v-if="user.barcode">User already has a barcode</p>
-            </o-switch>
-          </o-field>
-        </o-field>
-        <o-field label="Group">
-          <o-select v-model="user.groupUuid" placeholder="Select a group">
-            <option v-for="g in groups" :key="g.uuid" :value="g.uuid">
-              {{ g.name }}
-            </option>
-          </o-select>
-        </o-field>
-        <o-field label="Role">
-          <o-select v-model="user.roleUuid" placeholder="Select a role">
-            <option v-for="r in roles" :key="r.uuid" :value="r.uuid">
-              {{ r.name }}
-            </option>
-          </o-select>
-        </o-field>
+          <Label>{{ user.barcode ? "User already has a barcode" : "Generate barcode" }}</Label>
+        </div>
+        <div class="grid gap-2">
+          <Label>Group</Label>
+          <Select v-model="user.groupUuid">
+            <SelectTrigger>
+              <SelectValue placeholder="Select a group" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="g in groups" :key="g.uuid" :value="g.uuid">
+                {{ g.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="grid gap-2">
+          <Label>Role</Label>
+          <Select v-model="user.roleUuid">
+            <SelectTrigger>
+              <SelectValue placeholder="Select a role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="r in roles" :key="r.uuid" :value="r.uuid">
+                {{ r.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
-      <div class="flex flex-row justify-end gap-x-2">
-        <o-button @click="onCancel()">{{ cancelText ?? "Cancel" }}</o-button>
-        <o-button @click="onConfirm()">{{ confirmText ?? "Save" }}</o-button>
-      </div>
-    </div>
-  </o-modal>
+      <DialogFooter>
+        <Button variant="outline" @click="onCancel()">{{ cancelText ?? "Cancel" }}</Button>
+        <Button @click="onConfirm()">{{ confirmText ?? "Save" }}</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

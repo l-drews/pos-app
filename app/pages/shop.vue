@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { isUserBarcode, isProductBarcode } from "~/utils/barcode";
+import { Minus, Plus, Trash2, Check, ChevronsUpDown, Search } from "lucide-vue-next";
 
 const shop = useShopStore();
 
-// Barcode scanner logic — process accumulated digits on Enter
 const barcode = ref("");
+const comboOpen = ref(false);
 
 function handleKeydown(e: KeyboardEvent) {
   const tag = (e.target as HTMLElement)?.tagName;
@@ -40,11 +41,16 @@ function handleKeydown(e: KeyboardEvent) {
 onMounted(() => window.addEventListener("keydown", handleKeydown));
 onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
 
-function userFormatter(user: any) {
+function userLabel(user: any) {
   if (user.group) {
     return `${user.firstName} ${user.lastName} - ${user.group.name}`;
   }
   return `${user.firstName} ${user.lastName}`;
+}
+
+function selectShopUser(user: any) {
+  shop.selectUser(user?.barcode ?? "");
+  comboOpen.value = false;
 }
 
 const defaultImageUrl = "/images/default-avatar.png";
@@ -61,56 +67,86 @@ const userData = computed(() => [
   <section class="container h-full mx-auto">
     <div class="flex h-full flex-row gap-x-4">
       <!-- Cart Table -->
-      <div class="w-3/4 p-4 h-full bg-white rounded">
-        <o-table :data="shop.cartItems ?? []">
-          <template #empty>
-            <div class="m-4 text-center">
-              No items found. Please scan an item.
-            </div>
-          </template>
-          <o-table-column v-slot="props" field="product.name" label="Name" sortable>
-            {{ props.row.product?.name }}
-          </o-table-column>
-          <o-table-column v-slot="props" label="Price" sortable>
-            {{ formatCents(props.row.product?.price ?? 0) }}
-          </o-table-column>
-          <o-table-column v-slot="props" field="count" label="Count" width="130" sortable>
-            <o-field>
-              <o-input
-                :model-value="props.row.count"
-                numeric
-                group
-                expanded
-                :icon="props.row.count === 1 ? 'delete' : 'minus'"
-                icon-clickable
-                icon-right="plus"
-                icon-right-clickable
-                @icon-click="props.row.count === 1 ? shop.deleteItem(props.row) : shop.decrementCount(props.row)"
-                @icon-right-click="shop.incrementCount(props.row)"
-              />
-            </o-field>
-          </o-table-column>
-        </o-table>
+      <div class="w-3/4 p-4 h-full rounded-md border bg-card">
+        <div class="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead class="w-[130px]">Count</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow v-if="!shop.cartItems?.length">
+                <TableCell colspan="3" class="text-center">
+                  No items found. Please scan an item.
+                </TableCell>
+              </TableRow>
+              <TableRow v-for="item in shop.cartItems" :key="item.product?.barcode">
+                <TableCell>{{ item.product?.name }}</TableCell>
+                <TableCell>{{ formatCents(item.product?.price ?? 0) }}</TableCell>
+                <TableCell>
+                  <div class="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-7 w-7"
+                      @click="item.count === 1 ? shop.deleteItem(item) : shop.decrementCount(item)"
+                    >
+                      <Trash2 v-if="item.count === 1" class="size-3" />
+                      <Minus v-else class="size-3" />
+                    </Button>
+                    <span class="w-8 text-center text-sm">{{ item.count }}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-7 w-7"
+                      @click="shop.incrementCount(item)"
+                    >
+                      <Plus class="size-3" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <!-- Sidebar -->
-      <div class="w-1/4 p-4 h-full bg-white rounded flex flex-col justify-between">
+      <div class="w-1/4 p-4 h-full rounded-md border bg-card flex flex-col justify-between">
         <div>
-          <o-autocomplete
-            v-model="shop.searchString"
-            :custom-formatter="userFormatter"
-            expanded
-            :data="shop.filteredUsers"
-            placeholder="User"
-            icon="magnify"
-            clearable
-            @select="(user: any) => shop.selectUser(user?.barcode ?? '')"
-          >
-            <template #empty>No results found</template>
-          </o-autocomplete>
+          <Popover v-model:open="comboOpen">
+            <PopoverTrigger as-child>
+              <Button variant="outline" role="combobox" class="justify-between w-full">
+                <span class="truncate">{{ shop.currentUser ? userLabel(shop.currentUser) : "Select a user..." }}</span>
+                <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent class="w-full p-0" align="start">
+              <Command>
+                <CommandInput v-model="shop.searchString" placeholder="Search user..." />
+                <CommandEmpty>No users found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      v-for="u in shop.filteredUsers"
+                      :key="u.uuid"
+                      :value="userLabel(u)"
+                      @select="selectShopUser(u)"
+                    >
+                      <Check class="mr-2 size-4" :class="shop.currentUser?.uuid === u.uuid ? 'opacity-100' : 'opacity-0'" />
+                      {{ userLabel(u) }}
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <div class="py-4 flex flex-row justify-center">
             <img
-              class="h-32 aspect-square object-cover rounded-full border border-inherit drop-shadow"
+              class="h-32 aspect-square object-cover rounded-full border"
               :src="(shop.currentUser as any)?.imageUrl ?? defaultImageUrl"
             />
           </div>
@@ -120,36 +156,29 @@ const userData = computed(() => [
               :key="item.label"
               class="flex flex-row justify-between gap-4 pb-2 last:pb-0"
             >
-              <span>{{ item.label }}</span>
-              <span class="text-right">{{ item.value }}</span>
+              <span class="text-muted-foreground">{{ item.label }}</span>
+              <span class="text-right font-medium">{{ item.value }}</span>
             </li>
           </ul>
         </div>
         <div>
           <div class="flex flex-row justify-between pb-2">
-            <span>Total:</span>
-            <span>{{ formatCents(shop.paymentTotal) }}</span>
+            <span class="text-muted-foreground">Total:</span>
+            <span class="font-semibold">{{ formatCents(shop.paymentTotal) }}</span>
           </div>
           <div class="flex flex-row justify-between pb-2">
-            <span>Today's total:</span>
-            <span>{{ formatCents(shop.todaysOrderTotal) }}</span>
+            <span class="text-muted-foreground">Today's total:</span>
+            <span class="font-semibold">{{ formatCents(shop.todaysOrderTotal) }}</span>
           </div>
-          <o-button
-            expanded
-            variant="success"
+          <Button
+            class="w-full"
             :disabled="shop.disablePayment"
             @click="shop.createOrder()"
           >
             Pay
-          </o-button>
+          </Button>
         </div>
       </div>
     </div>
   </section>
 </template>
-
-<style scoped>
-:deep() .o-input {
-  text-align: center;
-}
-</style>

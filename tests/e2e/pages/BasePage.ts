@@ -15,12 +15,12 @@ export class BasePage {
   }
 
   getTable(): Locator {
-    return this.page.locator(".o-table");
+    return this.page.locator("table");
   }
 
   async getTableRowCount(): Promise<number> {
     await this.page.waitForTimeout(500);
-    const rows = this.page.locator(".o-table tbody .o-table__tr");
+    const rows = this.page.locator("table tbody tr");
     return rows.count();
   }
 
@@ -29,8 +29,8 @@ export class BasePage {
   }
 
   async fillField(label: string, value: string) {
-    const field = this.page.locator(`.o-field`).filter({ hasText: label });
-    await field.locator("input").fill(value);
+    const input = this.page.getByLabel(label);
+    await input.fill(value);
   }
 
   async waitForTableLoad() {

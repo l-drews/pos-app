@@ -38,20 +38,21 @@ function onConfirm() {
 </script>
 
 <template>
-  <o-modal v-model:active="active" scroll="clip" :can-cancel="false">
-    <div class="p-4">
-      <div class="pb-4">
-        <h5>{{ title }}</h5>
+  <Dialog :open="active" @update:open="active = $event">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{{ title }}</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid gap-2">
+          <Label for="role-name">Name</Label>
+          <Input id="role-name" v-model="role.name" placeholder="Role name" />
+        </div>
       </div>
-      <div class="pb-4">
-        <o-field grouped label="Name">
-          <o-input v-model="role.name" placeholder="Role name" expanded />
-        </o-field>
-      </div>
-      <div class="flex flex-row justify-end gap-x-2">
-        <o-button @click="onCancel()">{{ cancelText ?? "Cancel" }}</o-button>
-        <o-button @click="onConfirm()">{{ confirmText ?? "Save" }}</o-button>
-      </div>
-    </div>
-  </o-modal>
+      <DialogFooter>
+        <Button variant="outline" @click="onCancel()">{{ cancelText ?? "Cancel" }}</Button>
+        <Button @click="onConfirm()">{{ confirmText ?? "Save" }}</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

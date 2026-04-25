@@ -1,3 +1,5 @@
+import tailwindcss from "@tailwindcss/vite";
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
@@ -8,10 +10,20 @@ export default defineNuxtConfig({
     port: 3030,
   },
 
-  css: [
-    "@mdi/font/css/materialdesignicons.min.css",
-    "@oruga-ui/theme-oruga/style.css",
+  modules: [
+    "@pinia/nuxt",
+    "@pinia/colada-nuxt",
+    "shadcn-nuxt",
   ],
+
+  css: [
+    "~/assets/css/tailwind.css",
+  ],
+
+  shadcn: {
+    prefix: "",
+    componentDir: "@/components/ui",
+  },
 
   vite: {
     optimizeDeps: {
@@ -23,9 +35,8 @@ export default defineNuxtConfig({
         "drizzle-orm",
         "drizzle-orm/sqlite-core",
         "jose",
+        "vue-currency-input",
       ],
     },
   },
-
-  modules: ["@pinia/nuxt", "@pinia/colada-nuxt", "@nuxtjs/tailwindcss"],
 });

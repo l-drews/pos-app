@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { Pencil, Trash2, RefreshCw, Upload, Download } from "lucide-vue-next";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
@@ -30,6 +31,7 @@ const selected = ref<any>(null);
 const inputForm = ref(false);
 const confirmDialog = ref(false);
 const importFile = ref<File | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 function showForm(user: any | null) {
   selected.value = user;
@@ -57,6 +59,11 @@ function deleteItem() {
 
 function refresh() {
   queryCache.invalidateQueries({ key: orpc.users.key() });
+}
+
+function onImportFileSelect(e: Event) {
+  const files = (e.target as HTMLInputElement).files;
+  if (files?.length) importFile.value = files[0];
 }
 
 async function importUsers() {
@@ -88,7 +95,7 @@ const defaultImageUrl = "/images/default-avatar.png";
 </script>
 
 <template>
-  <section class="container mx-auto p-4 bg-white rounded">
+  <section class="container mx-auto p-4">
     <UserForm
       v-model:active="inputForm"
       title="Add user"
@@ -101,59 +108,75 @@ const defaultImageUrl = "/images/default-avatar.png";
     />
 
     <div class="flex justify-between items-center pb-4">
-      <o-button @click.stop="showForm(null)">Add user</o-button>
+      <Button @click.stop="showForm(null)">Add user</Button>
       <div class="flex gap-2">
-        <o-button @click="downloadBarcodes">Export</o-button>
-        <o-upload v-model="importFile" accept=".csv">
-          <o-button tag="a" :icon-left="importFile ? '' : 'plus'">
-            {{ importFile?.name || "import" }}
-          </o-button>
-        </o-upload>
-        <o-button v-if="importFile" @click="importUsers">Apply</o-button>
-        <o-button icon-right="refresh" @click="refresh()" />
+        <Button variant="outline" @click="downloadBarcodes">
+          <Download class="mr-2 size-4" />
+          Export
+        </Button>
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".csv"
+          class="hidden"
+          @change="onImportFileSelect"
+        />
+        <Button variant="outline" @click="fileInput?.click()">
+          <Upload class="mr-2 size-4" />
+          {{ importFile?.name || "Import" }}
+        </Button>
+        <Button v-if="importFile" @click="importUsers">Apply</Button>
+        <Button variant="outline" size="icon" @click="refresh()">
+          <RefreshCw class="size-4" />
+        </Button>
       </div>
     </div>
 
-    <o-table :data="users ?? []" :loading="isLoading" paginated per-page="15">
-      <template #empty>
-        <div class="m-4 text-center">No users found</div>
-      </template>
-      <o-table-column v-slot="props" width="56">
-        <img
-          class="w-8 aspect-square rounded-full border border-inherit"
-          :src="props.row.imageUrl ?? defaultImageUrl"
-        />
-      </o-table-column>
-      <o-table-column v-slot="props" field="firstName" label="First Name" sortable>
-        {{ props.row.firstName }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="lastName" label="Last Name" sortable>
-        {{ props.row.lastName }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="group" label="Group" sortable>
-        {{ props.row.group?.name }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="birthDate" label="Date" sortable>
-        {{ props.row.birthDate }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="balance" label="Balance" sortable>
-        {{ formatCents(props.row.balance ?? 0) }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="barcode" label="Barcode" sortable>
-        {{ props.row.barcode }}
-      </o-table-column>
-      <o-table-column v-slot="props" width="80">
-        <div class="float-right">
-          <o-icon clickable class="w-6 h-6" icon="pencil" @click.stop="showForm(props.row)" />
-          <o-icon clickable class="w-6 h-6" icon="delete" @click.stop="showConfirmDialog(props.row)" />
-        </div>
-      </o-table-column>
-    </o-table>
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="w-14" />
+            <TableHead>First Name</TableHead>
+            <TableHead>Last Name</TableHead>
+            <TableHead>Group</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Balance</TableHead>
+            <TableHead>Barcode</TableHead>
+            <TableHead class="w-20 text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="isLoading">
+            <TableCell colspan="8" class="text-center">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-else-if="!users?.length">
+            <TableCell colspan="8" class="text-center">No users found</TableCell>
+          </TableRow>
+          <TableRow v-for="user in users" :key="user.uuid">
+            <TableCell>
+              <img
+                class="w-8 h-8 rounded-full border object-cover"
+                :src="(user as any).imageUrl ?? defaultImageUrl"
+              />
+            </TableCell>
+            <TableCell>{{ user.firstName }}</TableCell>
+            <TableCell>{{ user.lastName }}</TableCell>
+            <TableCell>{{ (user as any).group?.name }}</TableCell>
+            <TableCell>{{ user.birthDate }}</TableCell>
+            <TableCell>{{ formatCents((user as any).balance ?? 0) }}</TableCell>
+            <TableCell>{{ user.barcode }}</TableCell>
+            <TableCell class="text-right">
+              <Button variant="ghost" size="icon" @click.stop="showForm(user)">
+                <Pencil class="size-4" />
+              </Button>
+              <Button variant="ghost" size="icon" @click.stop="showConfirmDialog(user)">
+                <Trash2 class="size-4" />
+              </Button>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   </section>
 </template>
-
-<style scoped>
-:deep() .o-table__td {
-  vertical-align: middle;
-}
-</style>

@@ -31,5 +31,5 @@ watch(
 </script>
 
 <template>
-  <o-input ref="inputRef" type="text" required />
+  <Input ref="inputRef" type="text" required />
 </template>

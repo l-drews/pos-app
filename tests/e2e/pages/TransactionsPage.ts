@@ -12,7 +12,7 @@ export class TransactionsPage extends BasePage {
 
   async createTransaction() {
     await this.clickButton("Create transaction");
-    await this.page.waitForSelector(".o-modal__content");
+    await this.page.waitForSelector('[role="dialog"]');
   }
 
   async getTransactionCount(): Promise<number> {

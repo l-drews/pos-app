@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { RefreshCw } from "lucide-vue-next";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
@@ -39,7 +40,7 @@ function refresh() {
 </script>
 
 <template>
-  <section class="container mx-auto p-4 bg-white rounded">
+  <section class="container mx-auto p-4">
     <TransactionForm
       v-model:active="inputForm"
       title="Create transaction"
@@ -47,26 +48,41 @@ function refresh() {
     />
 
     <div class="flex justify-between items-center pb-4">
-      <o-button @click.stop="showForm()">Create transaction</o-button>
-      <o-button icon-right="refresh" @click="refresh()" />
+      <Button @click.stop="showForm()">Create transaction</Button>
+      <Button variant="outline" size="icon" @click="refresh()">
+        <RefreshCw class="size-4" />
+      </Button>
     </div>
 
-    <o-table :data="transactions" :loading="isLoading" paginated per-page="15">
-      <template #empty>
-        <div class="m-4 text-center">No transactions found</div>
-      </template>
-      <o-table-column v-slot="props" field="user" label="User" sortable>
-        {{ props.row.user?.firstName }} {{ props.row.user?.lastName }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="type" label="Type" sortable>
-        {{ props.row.amount >= 0 ? "deposit" : "withdraw" }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="amount" label="Amount" sortable>
-        {{ formatCents(Math.abs(props.row.amount)) }}
-      </o-table-column>
-      <o-table-column v-slot="props" field="createdAt" label="Date" sortable>
-        {{ props.row.createdAt }}
-      </o-table-column>
-    </o-table>
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="isLoading">
+            <TableCell colspan="4" class="text-center">Loading...</TableCell>
+          </TableRow>
+          <TableRow v-else-if="!transactions.length">
+            <TableCell colspan="4" class="text-center">No transactions found</TableCell>
+          </TableRow>
+          <TableRow v-for="tx in transactions" :key="(tx as any).uuid">
+            <TableCell>{{ (tx as any).user?.firstName }} {{ (tx as any).user?.lastName }}</TableCell>
+            <TableCell>
+              <Badge :variant="tx.amount >= 0 ? 'default' : 'destructive'">
+                {{ tx.amount >= 0 ? "deposit" : "withdraw" }}
+              </Badge>
+            </TableCell>
+            <TableCell>{{ formatCents(Math.abs(tx.amount)) }}</TableCell>
+            <TableCell>{{ (tx as any).createdAt }}</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   </section>
 </template>

@@ -47,26 +47,29 @@ function onConfirm() {
 </script>
 
 <template>
-  <o-modal v-model:active="active" scroll="clip" :can-cancel="false">
-    <div class="p-4">
-      <div class="pb-4">
-        <h5>{{ title }}</h5>
-      </div>
-      <div class="pb-4">
-        <o-field grouped label="Name">
-          <o-input v-model="product.name" placeholder="Name" expanded />
-        </o-field>
-        <o-field grouped label="Barcode">
-          <o-input v-model="product.barcode" placeholder="Barcode" expanded />
-        </o-field>
-        <o-field grouped label="Price">
+  <Dialog :open="active" @update:open="active = $event">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{{ title }}</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid gap-2">
+          <Label for="product-name">Name</Label>
+          <Input id="product-name" v-model="product.name" placeholder="Name" />
+        </div>
+        <div class="grid gap-2">
+          <Label for="product-barcode">Barcode</Label>
+          <Input id="product-barcode" v-model="product.barcode" placeholder="Barcode" />
+        </div>
+        <div class="grid gap-2">
+          <Label for="product-price">Price</Label>
           <CurrencyInput v-model="product.price" />
-        </o-field>
+        </div>
       </div>
-      <div class="flex flex-row justify-end gap-x-2">
-        <o-button @click="onCancel()">{{ cancelText ?? "Cancel" }}</o-button>
-        <o-button @click="onConfirm()">{{ confirmText ?? "Save" }}</o-button>
-      </div>
-    </div>
-  </o-modal>
+      <DialogFooter>
+        <Button variant="outline" @click="onCancel()">{{ cancelText ?? "Cancel" }}</Button>
+        <Button @click="onConfirm()">{{ confirmText ?? "Save" }}</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
