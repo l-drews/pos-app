@@ -34,17 +34,3 @@ export const users = sqliteTable("users", {
     .$onUpdate(() => new Date()),
 });
 
-export const userLogins = sqliteTable("user_logins", {
-  userUuid: text("user_uuid")
-    .primaryKey()
-    .references(() => users.uuid),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .notNull()
-    .$defaultFn(() => new Date())
-    .$onUpdate(() => new Date()),
-});

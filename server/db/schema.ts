@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { groups, userLogins, users } from "./schema/users.ts";
+import { groups, users } from "./schema/users.ts";
 import { cartItems, products } from "./schema/products.ts";
 import { orderItems, orders, transactions } from "./schema/orders.ts";
 
@@ -13,16 +13,8 @@ export const groupsRelations = relations(groups, ({ many }) => ({
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   group: one(groups, { fields: [users.groupUuid], references: [groups.uuid] }),
-  login: one(userLogins),
   orders: many(orders),
   transactions: many(transactions),
-}));
-
-export const userLoginsRelations = relations(userLogins, ({ one }) => ({
-  user: one(users, {
-    fields: [userLogins.userUuid],
-    references: [users.uuid],
-  }),
 }));
 
 export const productsRelations = relations(products, ({ one, many }) => ({

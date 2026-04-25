@@ -157,7 +157,7 @@ export class UserService {
         );
       }
 
-      // Cascade delete: orderItems → orders → transactions → userLogin → user
+      // Cascade delete: orderItems → orders → transactions → user
       const userOrders = tx
         .select()
         .from(tables.orders)
@@ -173,10 +173,6 @@ export class UserService {
 
       tx.delete(tables.transactions)
         .where(eq(tables.transactions.userUuid, uuid))
-        .run();
-
-      tx.delete(tables.userLogins)
-        .where(eq(tables.userLogins.userUuid, uuid))
         .run();
 
       tx.delete(tables.users).where(eq(tables.users.uuid, uuid)).run();

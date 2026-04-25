@@ -37,9 +37,3 @@ export const base = os
       throw err;
     }
   });
-
-/**
- * Public procedure – no authentication required.
- * Use this only for genuinely open endpoints (e.g. health-check, OpenAPI spec).
- */
-export const publicProcedure = base;

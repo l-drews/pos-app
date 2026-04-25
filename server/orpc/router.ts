@@ -5,7 +5,6 @@ import { groupRouter } from "../components/groups/api";
 import { transactionRouter } from "../components/transactions/api";
 import { orderRouter } from "../components/orders/api";
 import { userRouter } from "../components/users/api";
-import { authRouter } from "../components/auth/api";
 
 const ping = os.handler(async () => "ping");
 const pong = os.handler(async () => "pong");
@@ -19,7 +18,6 @@ export const router = {
   transactions: transactionRouter,
   orders: orderRouter,
   users: userRouter,
-  auth: authRouter,
 };
 
 export type Router = typeof router;

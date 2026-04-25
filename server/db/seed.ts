@@ -1,15 +1,7 @@
-import { randomBytes, scryptSync } from "node:crypto";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { eq } from "drizzle-orm";
 import * as schema from "./schema.ts";
-
-// Placeholder password hashing — replace once an AuthenticationService is ported.
-function hashPassword(plain: string): string {
-  const salt = randomBytes(16).toString("hex");
-  const hash = scryptSync(plain, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
-}
 
 const sqlite = new Database(process.env.DATABASE_URL ?? "./db.sqlite");
 const db = drizzle(sqlite, { schema });
@@ -29,33 +21,20 @@ if (!adminGroup) {
 }
 
 const adminBarcode = "9570007";
-let adminUser = await db.query.users.findFirst({
+const existingAdmin = await db.query.users.findFirst({
   where: eq(schema.users.barcode, adminBarcode),
 });
 
-if (!adminUser) {
-  const [inserted] = await db
-    .insert(schema.users)
-    .values({
-      firstName: "Admin",
-      lastName: "",
-      birthDate: new Date("2000-01-01"),
-      barcode: adminBarcode,
-      balance: 0,
-      groupUuid: adminGroup.uuid,
-    })
-    .returning();
-  adminUser = inserted;
+if (!existingAdmin) {
+  await db.insert(schema.users).values({
+    firstName: "Admin",
+    lastName: "",
+    birthDate: new Date("2000-01-01"),
+    barcode: adminBarcode,
+    balance: 0,
+    groupUuid: adminGroup.uuid,
+  });
 }
-
-await db
-  .insert(schema.userLogins)
-  .values({
-    userUuid: adminUser.uuid,
-    username: "admin",
-    password: hashPassword("admin"),
-  })
-  .onConflictDoNothing();
 
 sqlite.close();
 console.log("Seed complete.");
