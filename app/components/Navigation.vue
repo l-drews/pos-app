@@ -6,7 +6,6 @@ import {
   Users,
   ShoppingCart,
   CreditCard,
-  ShieldCheck,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-vue-next";
@@ -20,7 +19,6 @@ const items = [
   { title: "Groups", icon: Users, path: "/groups" },
   { title: "Orders", icon: ShoppingCart, path: "/orders" },
   { title: "Transactions", icon: CreditCard, path: "/transactions" },
-  { title: "Roles", icon: ShieldCheck, path: "/roles" },
 ];
 </script>
 

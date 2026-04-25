@@ -14,20 +14,6 @@ export const groups = sqliteTable("groups", {
     .$onUpdate(() => new Date()),
 });
 
-export const roles = sqliteTable("roles", {
-  uuid: text("uuid")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: text("name").notNull().unique(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .notNull()
-    .$defaultFn(() => new Date())
-    .$onUpdate(() => new Date()),
-});
-
 export const users = sqliteTable("users", {
   uuid: text("uuid")
     .primaryKey()
@@ -35,7 +21,6 @@ export const users = sqliteTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   birthDate: integer("birth_date", { mode: "timestamp_ms" }).notNull(),
-  roleUuid: text("role_uuid").references(() => roles.uuid),
   groupUuid: text("group_uuid").references(() => groups.uuid),
   barcode: text("barcode").unique(),
   imagePath: text("image_path"),

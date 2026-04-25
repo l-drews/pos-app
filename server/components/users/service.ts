@@ -19,7 +19,6 @@ interface CreateUserInput {
   firstName: string;
   lastName: string;
   birthDate?: string;
-  roleUuid?: string;
   groupUuid?: string;
   barcode?: string;
   generateBarcode?: boolean;
@@ -30,7 +29,6 @@ interface UpdateUserInput {
   firstName?: string;
   lastName?: string;
   birthDate?: string;
-  roleUuid?: string | null;
   groupUuid?: string | null;
   barcode?: string | null;
   generateBarcode?: boolean;
@@ -66,7 +64,6 @@ export class UserService {
           firstName: input.firstName,
           lastName: input.lastName,
           birthDate: input.birthDate ? new Date(input.birthDate) : new Date(0),
-          roleUuid: input.roleUuid,
           groupUuid: input.groupUuid,
           barcode,
           imagePath,
@@ -103,7 +100,6 @@ export class UserService {
     if (input.lastName !== undefined) updateData.lastName = input.lastName;
     if (input.birthDate !== undefined)
       updateData.birthDate = new Date(input.birthDate);
-    if (input.roleUuid !== undefined) updateData.roleUuid = input.roleUuid;
     if (input.groupUuid !== undefined) updateData.groupUuid = input.groupUuid;
     if (barcode !== undefined) updateData.barcode = barcode;
     if (imagePath !== undefined) updateData.imagePath = imagePath;
@@ -256,14 +252,6 @@ export class UserService {
 
     if (!user) throw new NotFoundError("User", uuid);
 
-    const role = user.roleUuid
-      ? await this.db
-          .select()
-          .from(tables.roles)
-          .where(eq(tables.roles.uuid, user.roleUuid))
-          .get()
-      : null;
-
     const group = user.groupUuid
       ? await this.db
           .select()
@@ -272,7 +260,7 @@ export class UserService {
           .get()
       : null;
 
-    return { ...user, role, group };
+    return { ...user, group };
   }
 
   private async generateBarcode(): Promise<string> {

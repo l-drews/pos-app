@@ -8,7 +8,6 @@ interface User {
   lastName: string;
   birthDate: string | null;
   groupUuid: string | null;
-  roleUuid: string | null;
   generateBarcode: boolean;
   barcode?: string | null;
 }
@@ -29,14 +28,12 @@ const emit = defineEmits<{
 const orpc = useOrpc();
 
 const { data: groups } = useQuery(orpc.groups.getAll.queryOptions({ enabled: active }));
-const { data: roles } = useQuery(orpc.roles.getAll.queryOptions({ enabled: active }));
 
 const user = ref<User>({
   firstName: "",
   lastName: "",
   birthDate: null,
   groupUuid: null,
-  roleUuid: null,
   generateBarcode: true,
 });
 
@@ -54,7 +51,6 @@ watch(active, (val) => {
         lastName: props.selected.lastName,
         birthDate: props.selected.birthDate,
         groupUuid: props.selected.groupUuid,
-        roleUuid: props.selected.roleUuid,
         generateBarcode: false,
         barcode: props.selected.barcode,
       };
@@ -64,7 +60,6 @@ watch(active, (val) => {
         lastName: "",
         birthDate: null,
         groupUuid: null,
-        roleUuid: null,
         generateBarcode: true,
       };
     }
@@ -162,19 +157,6 @@ function onConfirm() {
             <SelectContent>
               <SelectItem v-for="g in groups" :key="g.uuid" :value="g.uuid">
                 {{ g.name }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div class="grid gap-2">
-          <Label>Role</Label>
-          <Select v-model="user.roleUuid">
-            <SelectTrigger>
-              <SelectValue placeholder="Select a role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="r in roles" :key="r.uuid" :value="r.uuid">
-                {{ r.name }}
               </SelectItem>
             </SelectContent>
           </Select>

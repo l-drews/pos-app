@@ -6,14 +6,6 @@ CREATE TABLE `groups` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `groups_name_unique` ON `groups` (`name`);--> statement-breakpoint
-CREATE TABLE `roles` (
-	`uuid` text PRIMARY KEY NOT NULL,
-	`name` text NOT NULL,
-	`created_at` integer NOT NULL,
-	`updated_at` integer NOT NULL
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `roles_name_unique` ON `roles` (`name`);--> statement-breakpoint
 CREATE TABLE `user_logins` (
 	`user_uuid` text PRIMARY KEY NOT NULL,
 	`username` text NOT NULL,
@@ -29,14 +21,12 @@ CREATE TABLE `users` (
 	`first_name` text NOT NULL,
 	`last_name` text NOT NULL,
 	`birth_date` integer NOT NULL,
-	`role_uuid` text,
 	`group_uuid` text,
 	`barcode` text,
 	`image_path` text,
 	`balance` integer DEFAULT 0 NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
-	FOREIGN KEY (`role_uuid`) REFERENCES `roles`(`uuid`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`group_uuid`) REFERENCES `groups`(`uuid`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint

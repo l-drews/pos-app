@@ -14,26 +14,18 @@ function hashPassword(plain: string): string {
 const sqlite = new Database(process.env.DATABASE_URL ?? "./db.sqlite");
 const db = drizzle(sqlite, { schema });
 
-const roleNames = ["Admin", "LaKi", "Teamer*in"] as const;
-for (const name of roleNames) {
-  await db.insert(schema.roles).values({ name }).onConflictDoNothing();
-}
-
 const adminGroupName = "Admins";
 await db
   .insert(schema.groups)
   .values({ name: adminGroupName })
   .onConflictDoNothing();
 
-const adminRole = await db.query.roles.findFirst({
-  where: eq(schema.roles.name, "Admin"),
-});
 const adminGroup = await db.query.groups.findFirst({
   where: eq(schema.groups.name, adminGroupName),
 });
 
-if (!adminRole || !adminGroup) {
-  throw new Error("Admin role or group missing after upsert");
+if (!adminGroup) {
+  throw new Error("Admin group missing after upsert");
 }
 
 const adminBarcode = "9570007";
@@ -50,7 +42,6 @@ if (!adminUser) {
       birthDate: new Date("2000-01-01"),
       barcode: adminBarcode,
       balance: 0,
-      roleUuid: adminRole.uuid,
       groupUuid: adminGroup.uuid,
     })
     .returning();

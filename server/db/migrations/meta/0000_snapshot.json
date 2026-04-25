@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "780c08dc-f2ae-40bb-9fff-f0d4e202f1ab",
+  "id": "898a45d2-1a45-4909-b441-49b673cac5e1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "groups": {
@@ -39,52 +39,6 @@
       "indexes": {
         "groups_name_unique": {
           "name": "groups_name_unique",
-          "columns": [
-            "name"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "roles": {
-      "name": "roles",
-      "columns": {
-        "uuid": {
-          "name": "uuid",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "roles_name_unique": {
-          "name": "roles_name_unique",
           "columns": [
             "name"
           ],
@@ -194,13 +148,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "role_uuid": {
-          "name": "role_uuid",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "group_uuid": {
           "name": "group_uuid",
           "type": "text",
@@ -255,19 +202,6 @@
         }
       },
       "foreignKeys": {
-        "users_role_uuid_roles_uuid_fk": {
-          "name": "users_role_uuid_roles_uuid_fk",
-          "tableFrom": "users",
-          "tableTo": "roles",
-          "columnsFrom": [
-            "role_uuid"
-          ],
-          "columnsTo": [
-            "uuid"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "users_group_uuid_groups_uuid_fk": {
           "name": "users_group_uuid_groups_uuid_fk",
           "tableFrom": "users",
