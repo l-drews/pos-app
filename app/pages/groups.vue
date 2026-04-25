@@ -92,7 +92,7 @@ function refresh() {
       </Button>
     </div>
 
-    <div class="rounded-md border">
+    <div class="rounded-lg border bg-card p-4">
       <Table>
         <TableHeader>
           <TableRow>

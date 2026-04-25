@@ -20,7 +20,7 @@ function refresh() {
       </Button>
     </div>
 
-    <div class="rounded-md border">
+    <div class="rounded-lg border bg-card p-4">
       <Table>
         <TableHeader>
           <TableRow>
@@ -41,7 +41,7 @@ function refresh() {
             <TableCell>{{ (order as any).user?.firstName }} {{ (order as any).user?.lastName }}</TableCell>
             <TableCell>{{ (order as any).items?.length ?? 0 }}</TableCell>
             <TableCell>{{ formatCents((order as any).amount ?? 0) }}</TableCell>
-            <TableCell>{{ (order as any).createdAt }}</TableCell>
+            <TableCell>{{ formatDateTime((order as any).createdAt) }}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

@@ -17,4 +17,19 @@ test.describe("Orders page", () => {
     const count = await ordersPage.getOrderCount();
     expect(count).toBeGreaterThanOrEqual(0);
   });
+
+  test("should display user names in order rows", async ({ page }) => {
+    await ordersPage.waitForTableLoad();
+    const rows = page.locator("table tbody tr");
+    const count = await rows.count();
+
+    if (count > 0) {
+      const firstUserCell = rows.first().locator("td:nth-child(1)");
+      const text = await firstUserCell.textContent();
+      expect(text?.trim().length).toBeGreaterThan(0);
+      expect(text).not.toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+    }
+  });
 });

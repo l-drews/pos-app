@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { isUserBarcode, isProductBarcode } from "~/utils/barcode";
-import { Minus, Plus, Trash2, Check, ChevronsUpDown, Search } from "lucide-vue-next";
+import {
+  Minus,
+  Plus,
+  Trash2,
+  Check,
+  ChevronsUpDown,
+  Search,
+} from "lucide-vue-next";
 
 const shop = useShopStore();
 
@@ -56,19 +63,32 @@ function selectShopUser(user: any) {
 const defaultImageUrl = "/images/default-avatar.png";
 
 const userData = computed(() => [
-  { label: "Name:", value: shop.currentUser ? `${shop.currentUser.firstName} ${shop.currentUser.lastName}` : "-" },
-  { label: "Birthdate:", value: shop.currentUser?.birthDate || "-" },
+  {
+    label: "Name:",
+    value: shop.currentUser
+      ? `${shop.currentUser.firstName} ${shop.currentUser.lastName}`
+      : "-",
+  },
+  {
+    label: "Birthdate:",
+    value: shop.currentUser?.birthDate
+      ? formatDate(shop.currentUser.birthDate)
+      : "-",
+  },
   { label: "Group:", value: (shop.currentUser as any)?.group?.name || "-" },
-  { label: "Balance:", value: shop.currentUser ? formatCents(shop.currentUser.balance ?? 0) : "-" },
+  {
+    label: "Balance:",
+    value: shop.currentUser ? formatCents(shop.currentUser.balance ?? 0) : "-",
+  },
 ]);
 </script>
 
 <template>
-  <section class="container h-full mx-auto">
+  <section class="container h-full mx-auto p-4">
     <div class="flex h-full flex-row gap-x-4">
       <!-- Cart Table -->
-      <div class="w-3/4 p-4 h-full rounded-md border bg-card">
-        <div class="rounded-md border">
+      <div class="w-3/4 h-full">
+        <div class="rounded-lg border p-4 bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -83,21 +103,32 @@ const userData = computed(() => [
                   No items found. Please scan an item.
                 </TableCell>
               </TableRow>
-              <TableRow v-for="item in shop.cartItems" :key="item.product?.barcode">
+              <TableRow
+                v-for="item in shop.cartItems"
+                :key="item.product?.barcode"
+              >
                 <TableCell>{{ item.product?.name }}</TableCell>
-                <TableCell>{{ formatCents(item.product?.price ?? 0) }}</TableCell>
+                <TableCell>{{
+                  formatCents(item.product?.price ?? 0)
+                }}</TableCell>
                 <TableCell>
                   <div class="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="icon"
                       class="h-7 w-7"
-                      @click="item.count === 1 ? shop.deleteItem(item) : shop.decrementCount(item)"
+                      @click="
+                        item.count === 1
+                          ? shop.deleteItem(item)
+                          : shop.decrementCount(item)
+                      "
                     >
                       <Trash2 v-if="item.count === 1" class="size-3" />
                       <Minus v-else class="size-3" />
                     </Button>
-                    <span class="w-8 text-center text-sm">{{ item.count }}</span>
+                    <span class="w-8 text-center text-sm">{{
+                      item.count
+                    }}</span>
                     <Button
                       variant="outline"
                       size="icon"
@@ -115,18 +146,31 @@ const userData = computed(() => [
       </div>
 
       <!-- Sidebar -->
-      <div class="w-1/4 p-4 h-full rounded-md border bg-card flex flex-col justify-between">
+      <div
+        class="w-1/4 p-4 h-full rounded-md border bg-card flex flex-col justify-between"
+      >
         <div>
           <Popover v-model:open="comboOpen">
             <PopoverTrigger as-child>
-              <Button variant="outline" role="combobox" class="justify-between w-full">
-                <span class="truncate">{{ shop.currentUser ? userLabel(shop.currentUser) : "Select a user..." }}</span>
+              <Button
+                variant="outline"
+                role="combobox"
+                class="justify-between w-full"
+              >
+                <span class="truncate">{{
+                  shop.currentUser
+                    ? userLabel(shop.currentUser)
+                    : "Select a user..."
+                }}</span>
                 <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent class="w-full p-0" align="start">
               <Command>
-                <CommandInput v-model="shop.searchString" placeholder="Search user..." />
+                <CommandInput
+                  v-model="shop.searchString"
+                  placeholder="Search user..."
+                />
                 <CommandEmpty>No users found.</CommandEmpty>
                 <CommandList>
                   <CommandGroup>
@@ -136,7 +180,14 @@ const userData = computed(() => [
                       :value="userLabel(u)"
                       @select="selectShopUser(u)"
                     >
-                      <Check class="mr-2 size-4" :class="shop.currentUser?.uuid === u.uuid ? 'opacity-100' : 'opacity-0'" />
+                      <Check
+                        class="mr-2 size-4"
+                        :class="
+                          shop.currentUser?.uuid === u.uuid
+                            ? 'opacity-100'
+                            : 'opacity-0'
+                        "
+                      />
                       {{ userLabel(u) }}
                     </CommandItem>
                   </CommandGroup>
@@ -164,11 +215,15 @@ const userData = computed(() => [
         <div>
           <div class="flex flex-row justify-between pb-2">
             <span class="text-muted-foreground">Total:</span>
-            <span class="font-semibold">{{ formatCents(shop.paymentTotal) }}</span>
+            <span class="font-semibold">{{
+              formatCents(shop.paymentTotal)
+            }}</span>
           </div>
           <div class="flex flex-row justify-between pb-2">
             <span class="text-muted-foreground">Today's total:</span>
-            <span class="font-semibold">{{ formatCents(shop.todaysOrderTotal) }}</span>
+            <span class="font-semibold">{{
+              formatCents(shop.todaysOrderTotal)
+            }}</span>
           </div>
           <Button
             class="w-full"

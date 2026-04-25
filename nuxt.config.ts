@@ -13,12 +13,11 @@ export default defineNuxtConfig({
   modules: [
     "@pinia/nuxt",
     "@pinia/colada-nuxt",
+    "@nuxtjs/tailwindcss",
     "shadcn-nuxt",
   ],
 
-  css: [
-    "~/assets/css/tailwind.css",
-  ],
+  css: ["~/assets/css/tailwind.css"],
 
   shadcn: {
     prefix: "",
@@ -36,6 +35,12 @@ export default defineNuxtConfig({
         "drizzle-orm/sqlite-core",
         "jose",
         "vue-currency-input",
+        "@vueuse/core",
+        "lucide-vue-next",
+        "class-variance-authority",
+        "reka-ui",
+        "clsx",
+        "tailwind-merge",
       ],
     },
   },

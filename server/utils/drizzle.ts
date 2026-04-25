@@ -4,7 +4,7 @@ import { schema } from "~~/server/db/";
 export const tables = schema;
 
 const databaseUrl = process.env.DATABASE_URL ?? "./db.sqlite";
-const db = drizzle(databaseUrl);
+const db = drizzle(databaseUrl, { schema });
 type db = typeof db;
 
 // Transaction type extracted from db.transaction() callback parameter

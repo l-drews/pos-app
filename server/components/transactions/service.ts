@@ -53,16 +53,11 @@ export class TransactionService {
   }
 
   async getAll() {
-    const txns = await this.db.select().from(tables.transactions);
-    const result = [];
-    for (const txn of txns) {
-      const order = await this.db
-        .select()
-        .from(tables.orders)
-        .where(eq(tables.orders.transactionUuid, txn.uuid))
-        .get();
-      result.push({ ...txn, order: order ?? null });
-    }
-    return result;
+    return this.db.query.transactions.findMany({
+      with: {
+        user: true,
+        order: true,
+      },
+    });
   }
 }

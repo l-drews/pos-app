@@ -74,15 +74,11 @@ export class OrderService {
   }
 
   async getAll() {
-    const allOrders = await this.db.select().from(tables.orders);
-    const result = [];
-    for (const order of allOrders) {
-      const items = await this.db
-        .select()
-        .from(tables.orderItems)
-        .where(eq(tables.orderItems.orderUuid, order.uuid));
-      result.push({ ...order, items });
-    }
-    return result;
+    return this.db.query.orders.findMany({
+      with: {
+        user: true,
+        items: true,
+      },
+    });
   }
 }

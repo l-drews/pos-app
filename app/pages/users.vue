@@ -132,7 +132,7 @@ const defaultImageUrl = "/images/default-avatar.png";
       </div>
     </div>
 
-    <div class="rounded-md border">
+    <div class="rounded-lg border bg-card p-4">
       <Table>
         <TableHeader>
           <TableRow>
@@ -140,7 +140,7 @@ const defaultImageUrl = "/images/default-avatar.png";
             <TableHead>First Name</TableHead>
             <TableHead>Last Name</TableHead>
             <TableHead>Group</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead>Date of Birth</TableHead>
             <TableHead>Balance</TableHead>
             <TableHead>Barcode</TableHead>
             <TableHead class="w-20 text-right">Actions</TableHead>
@@ -163,7 +163,7 @@ const defaultImageUrl = "/images/default-avatar.png";
             <TableCell>{{ user.firstName }}</TableCell>
             <TableCell>{{ user.lastName }}</TableCell>
             <TableCell>{{ (user as any).group?.name }}</TableCell>
-            <TableCell>{{ user.birthDate }}</TableCell>
+            <TableCell>{{ formatDate(user.birthDate) }}</TableCell>
             <TableCell>{{ formatCents((user as any).balance ?? 0) }}</TableCell>
             <TableCell>{{ user.barcode }}</TableCell>
             <TableCell class="text-right">
