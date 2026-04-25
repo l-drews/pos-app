@@ -1,0 +1,6 @@
+[submodule "pos-api"]
+	path = pos-api
+	url = git@github.com:LukDrews/pos-api.git
+[submodule "pos-ui"]
+	path = pos-ui
+	url = git@github.com:LukDrews/pos-ui.git
