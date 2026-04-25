@@ -1,21 +1,15 @@
 import { z } from "zod";
 import { base } from "~~/server/orpc";
 import type { db } from "~~/server/utils/drizzle";
-import { ProductService } from "./service";
+import { GroupService } from "./service";
 
 function makeService(db: db) {
-  return new ProductService(db);
+  return new GroupService(db);
 }
 
-export const productRouter = base.router({
+export const groupRouter = base.router({
   create: base
-    .input(
-      z.object({
-        name: z.string().min(1),
-        price: z.int().min(0),
-        barcode: z.string().optional(),
-      }),
-    )
+    .input(z.object({ name: z.string().min(1) }))
     .handler(async ({ context: { db }, input }) => {
       return await makeService(db).create(input);
     }),
@@ -30,19 +24,11 @@ export const productRouter = base.router({
       return await makeService(db).getByUuid(input.uuid);
     }),
 
-  getByBarcode: base
-    .input(z.object({ barcode: z.string().min(1) }))
-    .handler(async ({ context: { db }, input }) => {
-      return await makeService(db).getByBarcode(input.barcode);
-    }),
-
   update: base
     .input(
       z.object({
         uuid: z.uuid(),
         name: z.string().min(1).optional(),
-        price: z.int().min(0).optional(),
-        barcode: z.string().nullable().optional(),
       }),
     )
     .handler(async ({ context: { db }, input }) => {

@@ -1,19 +1,23 @@
 import { z } from "zod";
 import { base } from "~~/server/orpc";
 import type { db } from "~~/server/utils/drizzle";
-import { ProductService } from "./service";
+import { UserService } from "./service";
 
 function makeService(db: db) {
-  return new ProductService(db);
+  return new UserService(db);
 }
 
-export const productRouter = base.router({
+export const userRouter = base.router({
   create: base
     .input(
       z.object({
-        name: z.string().min(1),
-        price: z.int().min(0),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+        birthDate: z.string().min(1),
+        roleUuid: z.uuid().optional(),
+        groupUuid: z.uuid().optional(),
         barcode: z.string().optional(),
+        generateBarcode: z.boolean().optional(),
       }),
     )
     .handler(async ({ context: { db }, input }) => {
@@ -40,9 +44,13 @@ export const productRouter = base.router({
     .input(
       z.object({
         uuid: z.uuid(),
-        name: z.string().min(1).optional(),
-        price: z.int().min(0).optional(),
+        firstName: z.string().min(1).optional(),
+        lastName: z.string().min(1).optional(),
+        birthDate: z.string().optional(),
+        roleUuid: z.uuid().nullable().optional(),
+        groupUuid: z.uuid().nullable().optional(),
         barcode: z.string().nullable().optional(),
+        generateBarcode: z.boolean().optional(),
       }),
     )
     .handler(async ({ context: { db }, input }) => {
@@ -54,5 +62,11 @@ export const productRouter = base.router({
     .input(z.object({ uuid: z.uuid() }))
     .handler(async ({ context: { db }, input }) => {
       return await makeService(db).delete(input.uuid);
+    }),
+
+  importCsv: base
+    .input(z.object({ csvContent: z.string().min(1) }))
+    .handler(async ({ context: { db }, input }) => {
+      return await makeService(db).importCsv(input.csvContent);
     }),
 });
