@@ -23,3 +23,5 @@ export const router = {
   users: userRouter,
   auth: authRouter,
 };
+
+export type Router = typeof router;
