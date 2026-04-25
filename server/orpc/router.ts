@@ -1,10 +1,11 @@
-import { os } from '@orpc/server'
+import { os } from "@orpc/server";
+import { productRouter } from "../components/products/api";
 
-const ping = os.handler(async () => 'ping')
-const pong = os.handler(async () => 'pong')
+const ping = os.handler(async () => "ping");
+const pong = os.handler(async () => "pong");
 
 export const router = {
   ping,
   pong,
-  nested: { ping, pong }
-}
+  products: productRouter,
+};

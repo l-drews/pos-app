@@ -7,7 +7,13 @@ export default defineNuxtConfig({
   },
   vite: {
     optimizeDeps: {
-      include: ["@orpc/client", "@orpc/client/fetch", "@orpc/server"],
+      include: [
+        "@orpc/client",
+        "@orpc/client/fetch",
+        "@orpc/server",
+        "drizzle-orm",
+        "drizzle-orm/sqlite-core",
+      ],
     },
   },
 });
