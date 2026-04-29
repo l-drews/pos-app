@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
-import { type db, tables } from "~~/server/utils/drizzle";
+import { type Db, tables } from "~~/server/utils/drizzle";
 import { NotFoundError } from "~~/server/utils/errors";
 
 export class GroupService {
-  constructor(private db: db) {}
+  constructor(private db: Db) {}
 
   async create(data: { name: string }) {
     const [group] = await this.db

@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
-import { type db, tables } from "~~/server/utils/drizzle";
+import { type Db, tables } from "~~/server/utils/drizzle";
 import { ValidationError } from "~~/server/utils/errors";
 import { TransactionService } from "~~/server/components/transactions/service";
 
 export class OrderService {
   constructor(
-    private db: db,
+    private db: Db,
     private transactionService: TransactionService,
   ) {}
 
@@ -49,11 +49,12 @@ export class OrderService {
         })
         .returning()
         .all();
-      const order = orderRows[0];
+      const [order] = orderRows;
+      if (!order) throw new Error("Failed to insert order");
 
       // 5. Create order items
       const orderItems = cartWithProducts.map((item) => {
-        const rows = tx
+        const [row] = tx
           .insert(tables.orderItems)
           .values({
             orderUuid: order.uuid,
@@ -63,7 +64,8 @@ export class OrderService {
           })
           .returning()
           .all();
-        return rows[0];
+        if (!row) throw new Error("Failed to insert order item");
+        return row;
       });
 
       // 6. Clear cart

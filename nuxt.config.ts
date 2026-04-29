@@ -33,7 +33,6 @@ export default defineNuxtConfig({
         "@orpc/vue-colada",
         "drizzle-orm",
         "drizzle-orm/sqlite-core",
-        "jose",
         "vue-currency-input",
         "@vueuse/core",
         "lucide-vue-next",

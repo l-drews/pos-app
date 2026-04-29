@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import { useCurrencyInput } from "vue-currency-input";
+import {
+  CurrencyDisplay,
+  ValueScaling,
+  useCurrencyInput,
+  type CurrencyInputOptions,
+} from "vue-currency-input";
 
 const props = defineProps<{
   modelValue?: number;
 }>();
 
-const options = {
+const options: CurrencyInputOptions = {
   locale: "de-DE",
   currency: "EUR",
-  currencyDisplay: "symbol" as const,
+  currencyDisplay: CurrencyDisplay.symbol,
   precision: 2,
   hideCurrencySymbolOnFocus: false,
   hideGroupingSeparatorOnFocus: false,
   hideNegligibleDecimalDigitsOnFocus: false,
   autoDecimalDigits: true,
-  valueScaling: "precision" as const,
-  autoSign: false,
+  valueScaling: ValueScaling.precision,
   useGrouping: false,
   accountingSign: false,
 };

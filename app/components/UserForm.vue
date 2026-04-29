@@ -82,7 +82,7 @@ const defaultImageUrl = "/images/default-avatar.png";
 
 function onFileSelect(e: Event) {
   const files = (e.target as HTMLInputElement).files;
-  if (files?.length) image.value = files[0];
+  if (files?.length) image.value = files[0] ?? null;
 }
 
 function onCancel() {
@@ -138,7 +138,12 @@ function onConfirm() {
         </div>
         <div class="grid gap-2">
           <Label for="user-birthdate">Date of Birth</Label>
-          <Input id="user-birthdate" v-model="user.birthDate" type="date" />
+          <Input
+            id="user-birthdate"
+            :model-value="user.birthDate ?? ''"
+            type="date"
+            @update:model-value="user.birthDate = ($event as string) || null"
+          />
         </div>
         <div class="flex items-center gap-2">
           <Switch

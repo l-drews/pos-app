@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import { type db, type tx, tables } from "~~/server/utils/drizzle";
+import { type Db, type Tx, tables } from "~~/server/utils/drizzle";
 import { NotFoundError, ValidationError } from "~~/server/utils/errors";
 
 function formatCentsAsEUR(cents: number): string {
@@ -10,7 +10,7 @@ function formatCentsAsEUR(cents: number): string {
 }
 
 export class TransactionService {
-  constructor(private db: db) {}
+  constructor(private db: Db) {}
 
   async create(amount: number, userUuid: string) {
     return this.db.transaction((txn) => {
@@ -25,7 +25,7 @@ export class TransactionService {
    *
    * NOTE: Callback is sync because better-sqlite3 transactions are synchronous.
    */
-  createCreditTransaction(txn: tx, amount: number, userUuid: string) {
+  createCreditTransaction(txn: Tx, amount: number, userUuid: string) {
     const users = txn
       .update(tables.users)
       .set({ balance: sql`${tables.users.balance} + ${amount}` })
@@ -48,8 +48,10 @@ export class TransactionService {
       .values({ userUuid, amount })
       .returning()
       .all();
+    const [txnRow] = txnRows;
+    if (!txnRow) throw new Error("Failed to insert transaction");
 
-    return { ...txnRows[0], user };
+    return { ...txnRow, user };
   }
 
   async getAll() {

@@ -1,6 +1,5 @@
 import { os } from "@orpc/server";
 import { ORPCError } from "@orpc/client";
-import type { Context } from "./context";
 import { db } from "~~/server/utils/drizzle";
 import { ServiceError } from "~~/server/utils/errors";
 
@@ -11,12 +10,7 @@ const STATUS_TO_CODE: Record<number, string> = {
   422: "UNPROCESSABLE_CONTENT",
 };
 
-/**
- * Root builder scoped to the app Context.
- * All procedures in every component must be built from this base.
- */
 export const base = os
-  .$context<Context>()
   .use(async ({ next }) =>
     next({
       context: {

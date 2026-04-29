@@ -1,14 +1,20 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import {
+  drizzle,
+  type BetterSQLiteTransaction,
+} from "drizzle-orm/better-sqlite3";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
 
 import { schema } from "~~/server/db/";
-export const tables = schema;
 
 const databaseUrl = process.env.DATABASE_URL ?? "./db.sqlite";
-const db = drizzle(databaseUrl, { schema });
-type db = typeof db;
 
-// Transaction type extracted from db.transaction() callback parameter
-type tx = Parameters<Parameters<db["transaction"]>[0]>[0];
+export const tables = schema;
+export const db = drizzle(databaseUrl, { schema });
 
-export type { db, tx };
-export { db };
+export type Db = typeof db;
+
+type Schema = typeof schema;
+export type Tx = BetterSQLiteTransaction<
+  Schema,
+  ExtractTablesWithRelations<Schema>
+>;

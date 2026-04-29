@@ -105,7 +105,7 @@ const userData = computed(() => [
               </TableRow>
               <TableRow
                 v-for="item in shop.cartItems"
-                :key="item.product?.barcode"
+                :key="item.uuid"
               >
                 <TableCell>{{ item.product?.name }}</TableCell>
                 <TableCell>{{

@@ -1,11 +1,11 @@
 import { relations } from "drizzle-orm";
-import { groups, users } from "./schema/users.ts";
-import { cartItems, products } from "./schema/products.ts";
-import { orderItems, orders, transactions } from "./schema/orders.ts";
+import { groups, users } from "./schema/users";
+import { cartItems, products } from "./schema/products";
+import { orderItems, orders, transactions } from "./schema/orders";
 
-export * from "./schema/users.ts";
-export * from "./schema/products.ts";
-export * from "./schema/orders.ts";
+export * from "./schema/users";
+export * from "./schema/products";
+export * from "./schema/orders";
 
 export const groupsRelations = relations(groups, ({ many }) => ({
   users: many(users),

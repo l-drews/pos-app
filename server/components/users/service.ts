@@ -1,5 +1,5 @@
 import { desc, eq, sql } from "drizzle-orm";
-import { type db, type tx, tables } from "~~/server/utils/drizzle";
+import { type Db, tables } from "~~/server/utils/drizzle";
 import { generateNextUserBarcode } from "~~/server/utils/barcode";
 import {
   ConflictError,
@@ -45,7 +45,7 @@ interface CsvRow {
 }
 
 export class UserService {
-  constructor(private db: db) {}
+  constructor(private db: Db) {}
 
   async create(input: CreateUserInput) {
     let imagePath: string | null = null;
@@ -69,6 +69,7 @@ export class UserService {
           imagePath,
         })
         .returning();
+      if (!user) throw new Error("Failed to insert user");
 
       return this.getByUuidWithRelations(user.uuid);
     } catch (err) {
@@ -109,8 +110,8 @@ export class UserService {
       .set(updateData)
       .where(eq(tables.users.uuid, uuid))
       .returning();
+    if (!updated) throw new NotFoundError("User", uuid);
 
-    // Clean up old image if changed
     if (imagePath !== undefined && imagePath !== existing.imagePath) {
       deleteImage(existing.imagePath);
     }
@@ -202,6 +203,7 @@ export class UserService {
             .insert(tables.groups)
             .values({ name: row.group })
             .returning();
+          if (!group) throw new Error(`Failed to create group "${row.group}"`);
         }
         groupUuid = group.uuid;
       }
@@ -277,9 +279,10 @@ export class UserService {
 function parseGermanDate(dateStr: string): string {
   const match = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
   if (match) {
-    const day = match[1].padStart(2, "0");
-    const month = match[2].padStart(2, "0");
-    let year = parseInt(match[3], 10);
+    const [, dayRaw, monthRaw, yearRaw] = match as [string, string, string, string];
+    const day = dayRaw.padStart(2, "0");
+    const month = monthRaw.padStart(2, "0");
+    let year = parseInt(yearRaw, 10);
     if (year < 100) year += year < 50 ? 2000 : 1900;
     return `${year}-${month}-${day}`;
   }
@@ -292,9 +295,10 @@ function parseGermanDate(dateStr: string): string {
  */
 function parseCsv(content: string): CsvRow[] {
   const lines = content.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
+  const headerLine = lines[0];
+  if (!headerLine || lines.length < 2) return [];
 
-  const headers = lines[0].split(";").map((h) => h.trim().toLowerCase());
+  const headers = headerLine.split(";").map((h) => h.trim().toLowerCase());
 
   return lines.slice(1).filter(Boolean).map((line) => {
     const values = line.split(";");

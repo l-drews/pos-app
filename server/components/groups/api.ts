@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { base } from "~~/server/orpc";
-import type { db } from "~~/server/utils/drizzle";
+import type { Db } from "~~/server/utils/drizzle";
 import { GroupService } from "./service";
 
-function makeService(db: db) {
+function makeService(db: Db) {
   return new GroupService(db);
 }
 

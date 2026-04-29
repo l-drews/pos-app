@@ -63,7 +63,7 @@ function refresh() {
 
 function onImportFileSelect(e: Event) {
   const files = (e.target as HTMLInputElement).files;
-  if (files?.length) importFile.value = files[0];
+  if (files?.length) importFile.value = files[0] ?? null;
 }
 
 async function importUsers() {
