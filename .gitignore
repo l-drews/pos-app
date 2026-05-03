@@ -25,3 +25,7 @@ logs
 
 db.sqlite
 test-results/
+
+# Electron
+electron/dist/
+release/

@@ -6,12 +6,18 @@ import type { ExtractTablesWithRelations } from "drizzle-orm";
 
 import { schema } from "~~/server/db/";
 
-const databaseUrl = process.env.DATABASE_URL ?? "./db.sqlite";
-
 export const tables = schema;
-export const db = drizzle(databaseUrl, { schema });
 
-export type Db = typeof db;
+let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
+
+export function getDb() {
+  if (!_db) {
+    _db = drizzle(process.env.DATABASE_URL ?? "./db.sqlite", { schema });
+  }
+  return _db;
+}
+
+export type Db = ReturnType<typeof getDb>;
 
 type Schema = typeof schema;
 export type Tx = BetterSQLiteTransaction<

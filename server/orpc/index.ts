@@ -1,6 +1,6 @@
 import { os } from "@orpc/server";
 import { ORPCError } from "@orpc/client";
-import { db } from "~~/server/utils/drizzle";
+import { getDb } from "~~/server/utils/drizzle";
 import { ServiceError } from "~~/server/utils/errors";
 
 const STATUS_TO_CODE: Record<number, string> = {
@@ -14,7 +14,7 @@ export const base = os
   .use(async ({ next }) =>
     next({
       context: {
-        db: db,
+        db: getDb(),
       },
     }),
   )
