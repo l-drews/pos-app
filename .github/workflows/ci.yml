@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Unit and component tests
+        run: pnpm test
+
+      - name: Generate frontend
+        run: pnpm generate
+
+      - name: Compile Electron main
+        run: pnpm electron:compile
+
+      - name: Electron integration test
+        # Linux runners have no display server; Electron needs one.
+        run: xvfb-run -a pnpm test:electron
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate frontend
+        run: pnpm generate
+
+      - name: Compile Electron main
+        run: pnpm electron:compile
+
+      - name: Package app (no installer, no publish)
+        run: pnpm exec electron-builder --dir --publish never

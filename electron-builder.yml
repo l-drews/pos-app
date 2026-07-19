@@ -10,8 +10,23 @@ files:
   - "package.json"
 asarUnpack:
   - "**/node_modules/better-sqlite3/**/*"
+# Auto-update metadata (latest.yml / latest-mac.yml) and artifacts are
+# published to GitHub Releases by CI (release.yml) via --publish always.
+# releaseType "release" publishes immediately — electron-updater ignores drafts.
+publish:
+  provider: github
+  owner: l-drews
+  repo: pos-app
+  releaseType: release
 mac:
-  target: dmg
+  # zip is required by Squirrel.Mac for auto-update; both Apple Silicon and
+  # Intel are built. Note: in-place auto-update on macOS additionally requires
+  # code signing — until then mac users are pointed at the release page.
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
   category: public.app-category.business
 win:
   target: nsis

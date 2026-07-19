@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/message-port";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { setupAutoUpdater } from "./updater.cjs";
 
 const DEV_URL = "http://localhost:3030";
 
@@ -105,6 +106,7 @@ app.whenReady().then(async () => {
   await setupORPC();
   setupAppProtocol();
   await createWindow();
+  setupAutoUpdater();
 });
 
 app.on("window-all-closed", () => {
