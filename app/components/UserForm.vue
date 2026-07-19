@@ -11,6 +11,7 @@ interface User {
   groupUuid: string | null;
   generateBarcode: boolean;
   barcode?: string | null;
+  image?: File;
 }
 
 const props = defineProps<{
@@ -67,7 +68,8 @@ const fileInput = ref<HTMLInputElement | null>(null);
 watch(active, (val) => {
   if (val) {
     image.value = null;
-    preview.value = null;
+    // Pre-fill with the user's current image; a newly picked file replaces it.
+    preview.value = (props.selected as any)?.imageUrl ?? null;
     errors.value = {};
     if (props.selected) {
       user.value = {
@@ -98,7 +100,7 @@ watch(image, (val) => {
       preview.value = null;
     }
   } else {
-    preview.value = null;
+    preview.value = (props.selected as any)?.imageUrl ?? null;
   }
 });
 
@@ -128,6 +130,9 @@ function onConfirm() {
   payload.generateBarcode = payload.barcode == null;
   delete payload.barcode;
   payload.uuid = props.selected?.uuid;
+  // Only send an image when a new file was picked; omitting the field keeps
+  // the user's existing image.
+  if (image.value) payload.image = image.value;
   // The create schema rejects null (z.uuid().optional()), so omit the field
   // there; the update schema accepts null and uses it to clear the group.
   if (payload.groupUuid == null && !props.selected) {

@@ -14,5 +14,5 @@
     }
   },
   "include": ["./**/*.cts", "../server/**/*.ts"],
-  "exclude": ["./dist", "../node_modules"]
+  "exclude": ["./dist", "../node_modules", "../server/routes"]
 }

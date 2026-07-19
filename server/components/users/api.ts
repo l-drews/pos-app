@@ -1,10 +1,25 @@
 import { z } from "zod";
 import { base } from "~~/server/orpc";
 import type { Db } from "~~/server/utils/drizzle";
+import { extForMime } from "~~/server/utils/images";
 import { UserService } from "./service";
 
 function makeService(db: Db) {
   return new UserService(db);
+}
+
+const imageSchema = z
+  .file()
+  .max(5 * 1024 * 1024)
+  .mime(["image/png", "image/jpeg", "image/webp"])
+  .optional();
+
+async function toImageUpload(image?: File) {
+  if (!image) return undefined;
+  return {
+    data: Buffer.from(await image.arrayBuffer()),
+    ext: extForMime(image.type) ?? "png",
+  };
 }
 
 export const userRouter = base.router({
@@ -17,10 +32,14 @@ export const userRouter = base.router({
         groupUuid: z.uuid().optional(),
         barcode: z.string().optional(),
         generateBarcode: z.boolean().optional(),
+        image: imageSchema,
       }),
     )
     .handler(async ({ context: { db }, input }) => {
-      return await makeService(db).create(input);
+      return await makeService(db).create({
+        ...input,
+        image: await toImageUpload(input.image),
+      });
     }),
 
   getAll: base.handler(async ({ context: { db } }) => {
@@ -49,11 +68,15 @@ export const userRouter = base.router({
         groupUuid: z.uuid().nullable().optional(),
         barcode: z.string().nullable().optional(),
         generateBarcode: z.boolean().optional(),
+        image: imageSchema,
       }),
     )
     .handler(async ({ context: { db }, input }) => {
       const { uuid, ...data } = input;
-      return await makeService(db).update(uuid, data);
+      return await makeService(db).update(uuid, {
+        ...data,
+        image: await toImageUpload(input.image),
+      });
     }),
 
   delete: base

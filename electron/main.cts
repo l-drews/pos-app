@@ -18,8 +18,18 @@ protocol.registerSchemesAsPrivileged([
 let handler: InstanceType<typeof RPCHandler> | null = null;
 
 async function setupDB() {
-  if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = path.join(app.getPath("userData"), "pos.sqlite");
+  // Only the packaged app owns its storage in userData. In electron:dev the
+  // renderer is served by the Nuxt dev server (localhost:3030), which reads
+  // images and the database relative to the project root — both processes
+  // must share those locations, so leave the env unset and let the shared
+  // defaults (./db.sqlite, .data/images) apply.
+  if (app.isPackaged) {
+    if (!process.env.DATABASE_URL) {
+      process.env.DATABASE_URL = path.join(app.getPath("userData"), "pos.sqlite");
+    }
+    if (!process.env.IMAGES_DIR) {
+      process.env.IMAGES_DIR = path.join(app.getPath("userData"), "images");
+    }
   }
 
   const { getDb } = await import("../server/utils/drizzle");
@@ -44,6 +54,12 @@ function setupAppProtocol() {
     } catch {
       return new Response("Bad request", { status: 400 });
     }
+    // Uploaded user images live in userData, not in the packaged frontend.
+    if (pathname.startsWith("/images/") && process.env.IMAGES_DIR) {
+      const imageFile = path.join(process.env.IMAGES_DIR, path.basename(pathname));
+      return net.fetch(pathToFileURL(imageFile).toString());
+    }
+
     // Paths without a file extension are client-side routes → SPA fallback.
     const hasExt = path.extname(pathname) !== "";
     const relative = hasExt ? pathname.slice(1) : "index.html";
