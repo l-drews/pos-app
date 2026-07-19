@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useQueryCache } from "@pinia/colada";
-import { Pencil, Trash2, RefreshCw, Upload, Download } from "lucide-vue-next";
+import { Pencil, Trash2, RefreshCw, Upload, Download, Search } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 
 const orpc = useOrpc();
@@ -46,6 +46,49 @@ const inputForm = ref(false);
 const confirmDialog = ref(false);
 const importFile = ref<File | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+
+// Client-side search + sort: the page already loads all users, and at POS
+// scale filtering in the browser is instant.
+const search = ref("");
+
+type SortColumn = "firstName" | "lastName" | "group" | "birthDate" | "balance" | "barcode";
+const sortBy = ref<SortColumn>("firstName");
+const sortDir = ref<"asc" | "desc">("asc");
+
+function toggleSort(column: string) {
+  const col = column as SortColumn;
+  if (sortBy.value === col) {
+    sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
+  } else {
+    sortBy.value = col;
+    sortDir.value = "asc";
+  }
+}
+
+const visibleUsers = computed(() => {
+  let result = (users.value ?? []) as any[];
+
+  const query = search.value.trim().toLowerCase();
+  if (query) {
+    result = result.filter((u) =>
+      [u.firstName, u.lastName, u.group?.name, u.barcode]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query)),
+    );
+  }
+
+  const dir = sortDir.value === "asc" ? 1 : -1;
+  const key = sortBy.value;
+  return [...result].sort((a, b) => {
+    if (key === "balance") return ((a.balance ?? 0) - (b.balance ?? 0)) * dir;
+    if (key === "birthDate") {
+      return (new Date(a.birthDate).getTime() - new Date(b.birthDate).getTime()) * dir;
+    }
+    const av = key === "group" ? (a.group?.name ?? "") : (a[key] ?? "");
+    const bv = key === "group" ? (b.group?.name ?? "") : (b[key] ?? "");
+    return String(av).localeCompare(String(bv), "de", { sensitivity: "base" }) * dir;
+  });
+});
 
 function showForm(user: any | null) {
   selected.value = user;
@@ -139,7 +182,15 @@ function exportUsers() {
     />
 
     <div class="flex justify-between items-center">
-      <Button @click.stop="showForm(null)">Add user</Button>
+      <div class="flex items-center gap-2">
+        <Button @click.stop="showForm(null)">Add user</Button>
+        <div class="relative">
+          <Search
+            class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input v-model="search" placeholder="Search users..." class="w-64 pl-8" />
+        </div>
+      </div>
       <div class="flex gap-2">
         <Button variant="outline" @click="exportUsers">
           <Download class="mr-2 size-4" />
@@ -168,12 +219,24 @@ function exportUsers() {
         <TableHeader>
           <TableRow>
             <TableHead class="w-14" />
-            <TableHead>First Name</TableHead>
-            <TableHead>Last Name</TableHead>
-            <TableHead>Group</TableHead>
-            <TableHead>Date of Birth</TableHead>
-            <TableHead>Balance</TableHead>
-            <TableHead>Barcode</TableHead>
+            <SortableHead column="firstName" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              First Name
+            </SortableHead>
+            <SortableHead column="lastName" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Last Name
+            </SortableHead>
+            <SortableHead column="group" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Group
+            </SortableHead>
+            <SortableHead column="birthDate" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Date of Birth
+            </SortableHead>
+            <SortableHead column="balance" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Balance
+            </SortableHead>
+            <SortableHead column="barcode" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Barcode
+            </SortableHead>
             <TableHead class="w-20 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -181,11 +244,13 @@ function exportUsers() {
           <TableRow v-if="isLoading">
             <TableCell colspan="8" class="text-center">Loading...</TableCell>
           </TableRow>
-          <TableRow v-else-if="!users?.length">
-            <TableCell colspan="8" class="text-center">No users found</TableCell>
+          <TableRow v-else-if="!visibleUsers.length">
+            <TableCell colspan="8" class="text-center">
+              {{ search ? "No users match your search" : "No users found" }}
+            </TableCell>
           </TableRow>
           <TableRow
-            v-for="user in users"
+            v-for="user in visibleUsers"
             :key="user.uuid"
             class="cursor-pointer"
             @click="openUser(user.uuid)"
