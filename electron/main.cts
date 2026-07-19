@@ -65,9 +65,16 @@ async function setupORPC() {
     ],
   });
 
+  // An unreferenced MessagePortMain is closed when garbage collected, which
+  // would silently kill the renderer's RPC channel mid-session — keep every
+  // upgraded port referenced until it closes (renderer reload/reconnect).
+  const activePorts = new Set<Electron.MessagePortMain>();
+
   ipcMain.on("start-orpc-server", (event) => {
     const [serverPort] = event.ports;
     if (!serverPort || !handler) return;
+    activePorts.add(serverPort);
+    serverPort.on("close", () => activePorts.delete(serverPort));
     handler.upgrade(serverPort, { context: {} });
     serverPort.start();
   });
