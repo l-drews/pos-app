@@ -35,6 +35,7 @@ jobs:
         run: xvfb-run -a pnpm test:electron
 
   build:
+    needs: test
     strategy:
       fail-fast: false
       matrix:

@@ -31,7 +31,11 @@ await build({
 });
 
 const electronBinary = require("electron");
-const child = spawn(electronBinary, [path.join(outDir, "channel-recovery.cjs")], {
+const args = [path.join(outDir, "channel-recovery.cjs")];
+// CI runners can't use Chromium's SUID sandbox (not setuid root there); the
+// harness only loads our own generated frontend, so it is safe to disable.
+if (process.env.CI) args.unshift("--no-sandbox");
+const child = spawn(electronBinary, args, {
   stdio: "inherit",
   cwd: root,
 });
