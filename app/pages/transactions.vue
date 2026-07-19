@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { useQuery, useQueryCache } from "@pinia/colada";
 import { RefreshCw } from "lucide-vue-next";
 
 const orpc = useOrpc();
@@ -18,6 +18,8 @@ const { data, isLoading } = useQuery(
       sortBy: sortBy.value,
       sortDir: sortDir.value,
     }),
+    // Keep the previous page's rows visible while the next page loads.
+    placeholderData: (previousData) => previousData,
   }),
 );
 
@@ -34,7 +36,7 @@ function toggleSort(column: "createdAt" | "amount") {
   page.value = 0;
 }
 
-const createMutation = useMutation({
+const createMutation = useToastMutation({
   ...orpc.transactions.create.mutationOptions(),
   // A new transaction is the newest row, so jump back to the first page.
   onSuccess: () => {
@@ -91,7 +93,7 @@ function refresh() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow v-if="isLoading">
+          <TableRow v-if="isLoading && !transactions.length">
             <TableCell colspan="4" class="text-center">Loading...</TableCell>
           </TableRow>
           <TableRow v-else-if="!transactions.length">

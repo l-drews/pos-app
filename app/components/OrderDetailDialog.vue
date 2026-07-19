@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Shows a single order's line items. Expects an order with `items` that each
-// include their `product` (see orders.getAll / orders.getByUser).
+// include their `product` (see orders.list / orders.getByUser).
 const props = defineProps<{ order?: any | null }>();
 const active = defineModel<boolean>("active", { default: false });
 </script>

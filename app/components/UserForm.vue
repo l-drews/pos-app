@@ -48,6 +48,16 @@ const user = ref<User>({
 
 const errors = ref<FieldErrors>({});
 
+// Sentinel for "no group" — reka-ui's Select needs a concrete item value,
+// and clearing the selection must reach the server as groupUuid: null.
+const NO_GROUP = "none";
+const selectedGroup = computed({
+  get: () => user.value.groupUuid ?? NO_GROUP,
+  set: (value: string) => {
+    user.value.groupUuid = value === NO_GROUP ? null : value;
+  },
+});
+
 const image = ref<File | null>(null);
 const preview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -116,7 +126,9 @@ function onConfirm() {
   payload.generateBarcode = payload.barcode == null;
   delete payload.barcode;
   payload.uuid = props.selected?.uuid;
-  if (payload.groupUuid == null) {
+  // The create schema rejects null (z.uuid().optional()), so omit the field
+  // there; the update schema accepts null and uses it to clear the group.
+  if (payload.groupUuid == null && !props.selected) {
     delete (payload as Partial<User>).groupUuid;
   }
   active.value = false;
@@ -185,11 +197,12 @@ function onConfirm() {
         </div>
         <div class="grid gap-2">
           <Label>Group</Label>
-          <Select v-model="user.groupUuid">
+          <Select v-model="selectedGroup">
             <SelectTrigger>
               <SelectValue placeholder="Select a group" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem :value="NO_GROUP">No group</SelectItem>
               <SelectItem v-for="g in groups" :key="g.uuid" :value="g.uuid">
                 {{ g.name }}
               </SelectItem>

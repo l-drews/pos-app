@@ -18,6 +18,8 @@ const { data, isLoading } = useQuery(
       sortBy: sortBy.value,
       sortDir: sortDir.value,
     }),
+    // Keep the previous page's rows visible while the next page loads.
+    placeholderData: (previousData) => previousData,
   }),
 );
 
@@ -72,7 +74,7 @@ function refresh() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow v-if="isLoading">
+          <TableRow v-if="isLoading && !orders.length">
             <TableCell colspan="4" class="text-center">Loading...</TableCell>
           </TableRow>
           <TableRow v-else-if="!orders?.length">

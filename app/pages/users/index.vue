@@ -93,9 +93,11 @@ async function importUsers() {
 }
 
 // Exports users in the exact format the importer expects (the import format is
-// the source of truth), so an exported file can be re-imported as-is.
+// the source of truth), so an exported file can be re-imported as-is. The
+// importer splits on ";" without quoting, so strip it from field values.
 function exportUsers() {
   if (!users.value) return;
+  const field = (value: string) => value.replace(/;/g, ",");
   const headers = ["firstname", "lastname", "birthdate", "group", "barcode", "amount"];
   const lines = [headers.join(";")];
   for (const user of users.value as any[]) {
@@ -103,11 +105,11 @@ function exportUsers() {
     const amount = ((user.balance ?? 0) / 100).toFixed(2).replace(".", ",");
     lines.push(
       [
-        user.firstName ?? "",
-        user.lastName ?? "",
+        field(user.firstName ?? ""),
+        field(user.lastName ?? ""),
         birthdate === "-" ? "" : birthdate,
-        user.group?.name ?? "",
-        user.barcode ?? "",
+        field(user.group?.name ?? ""),
+        field(user.barcode ?? ""),
         amount,
       ].join(";"),
     );

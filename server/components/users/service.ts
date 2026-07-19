@@ -298,9 +298,12 @@ export class UserService {
  * Parse a monetary amount string into integer cents.
  *
  * Handles both German ("12,50", "1.234,56") and English ("12.50", "1,234.56")
- * number formats, plus surrounding whitespace/currency symbols. The right-most
- * "," or "." is treated as the decimal separator; any other separators are
- * thousands groupings and are stripped. Returns null for non-numeric input.
+ * number formats, plus surrounding whitespace/currency symbols. When both ","
+ * and "." appear, the right-most one is the decimal separator. When only one
+ * kind of separator appears and it is followed by exactly 3 digits, it is a
+ * thousands grouping ("1.234" and "1,234" both mean 1234 in their respective
+ * locales — money amounts don't have 3 decimals); otherwise it is the decimal
+ * separator. Returns null for non-numeric input.
  *
  * The previous `parseFloat` approach silently dropped the fractional part of
  * German-formatted amounts (e.g. "12,50" -> 12 -> €12.00 instead of €12.50).
@@ -309,10 +312,17 @@ function parseAmountToCents(raw: string): number | null {
   const cleaned = raw.trim().replace(/[^\d.,-]/g, "");
   if (!cleaned || !/\d/.test(cleaned)) return null;
 
-  const decimalPos = Math.max(cleaned.lastIndexOf(","), cleaned.lastIndexOf("."));
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+  const decimalPos = Math.max(lastComma, lastDot);
   let normalized: string;
   if (decimalPos === -1) {
     normalized = cleaned;
+  } else if (
+    (lastComma === -1 || lastDot === -1) &&
+    cleaned.length - decimalPos - 1 === 3
+  ) {
+    normalized = cleaned.replace(/[.,]/g, "");
   } else {
     const intPart = cleaned.slice(0, decimalPos).replace(/[.,]/g, "");
     const fracPart = cleaned.slice(decimalPos + 1).replace(/[.,]/g, "");

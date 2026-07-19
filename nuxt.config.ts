@@ -15,6 +15,7 @@ export default defineNuxtConfig({
     "@pinia/colada-nuxt",
     "@nuxtjs/tailwindcss",
     "shadcn-nuxt",
+    "@nuxt/test-utils/module",
   ],
 
   css: ["~/assets/css/tailwind.css", "vue-sonner/style.css"],

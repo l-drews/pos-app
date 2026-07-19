@@ -4,8 +4,10 @@ export const useShopStore = defineStore("shop", () => {
   const orpc = useOrpc();
   const queryCache = useQueryCache();
 
-  // State
+  // State — the scanner selects by barcode (the user list may not be loaded
+  // yet at scan time), the combobox selects a concrete user by uuid.
   const userBarcode = ref<string>("");
+  const selectedUserUuid = ref<string | null>(null);
   const searchString = ref("");
 
   // Cart data via oRPC query
@@ -46,7 +48,14 @@ export const useShopStore = defineStore("shop", () => {
 
   // Computed
   const currentUser = computed(() => {
-    if (!userBarcode.value || !allUsers.value) return null;
+    if (!allUsers.value) return null;
+    if (selectedUserUuid.value) {
+      return (
+        allUsers.value.find((u: any) => u.uuid === selectedUserUuid.value) ??
+        null
+      );
+    }
+    if (!userBarcode.value) return null;
     return allUsers.value.find((u: any) => u.barcode === userBarcode.value) ?? null;
   });
 
@@ -79,7 +88,10 @@ export const useShopStore = defineStore("shop", () => {
   });
 
   const disablePayment = computed(
-    () => !currentUser.value || !cartItems.value?.length,
+    () =>
+      !currentUser.value ||
+      !cartItems.value?.length ||
+      createOrderMutation.isLoading.value,
   );
 
   // Actions
@@ -105,13 +117,31 @@ export const useShopStore = defineStore("shop", () => {
 
   async function createOrder() {
     if (!currentUser.value) return;
-    await createOrderMutation.mutateAsync({ userUuid: currentUser.value.uuid });
-    userBarcode.value = "";
-    searchString.value = "";
+    // Snapshot the selection: the next customer may already be selected by
+    // the time the order request settles, and must not be deselected then.
+    const orderedUuid = currentUser.value.uuid;
+    try {
+      await createOrderMutation.mutateAsync({ userUuid: orderedUuid });
+    } catch {
+      // Feedback is handled by the mutation's error toast; keep the selection
+      // so the cashier can retry.
+      return;
+    }
+    if (currentUser.value?.uuid === orderedUuid) {
+      userBarcode.value = "";
+      selectedUserUuid.value = null;
+      searchString.value = "";
+    }
   }
 
   function selectUser(barcode: string) {
     userBarcode.value = barcode;
+    selectedUserUuid.value = null;
+  }
+
+  function selectUserByUuid(uuid: string) {
+    selectedUserUuid.value = uuid;
+    userBarcode.value = "";
   }
 
   return {
@@ -130,6 +160,7 @@ export const useShopStore = defineStore("shop", () => {
     deleteItem,
     createOrder,
     selectUser,
+    selectUserByUuid,
     refreshCart,
   };
 });

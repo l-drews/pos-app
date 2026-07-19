@@ -23,14 +23,19 @@ function handleKeydown(e: KeyboardEvent) {
     barcode.value = "";
 
     if (isProductBarcode(tmp)) {
+      e.preventDefault();
       shop.addCartItem(tmp);
       return;
     }
 
     if (isUserBarcode(tmp)) {
+      e.preventDefault();
+      // Settle the previous customer's open cart before switching. Compare
+      // against the selected user (not the scanned barcode) so this also
+      // works when the user was picked via the combobox.
       if (
-        shop.userBarcode &&
-        shop.userBarcode !== tmp &&
+        shop.currentUser &&
+        shop.currentUser.barcode !== tmp &&
         shop.paymentTotal !== 0
       ) {
         shop.createOrder();
@@ -39,6 +44,13 @@ function handleKeydown(e: KeyboardEvent) {
       return;
     }
 
+    // A non-empty unrecognized buffer is a stray or partial scan — discard it
+    // rather than treating Enter as a payment.
+    if (tmp !== "") return;
+
+    // Bare Enter pays, unless it is activating a focused control (whose own
+    // handler already runs on Enter).
+    if (tag === "BUTTON" || tag === "A") return;
     shop.createOrder();
   } else if (/^\d$/.test(e.key)) {
     barcode.value += e.key;
@@ -56,7 +68,8 @@ function userLabel(user: any) {
 }
 
 function selectShopUser(user: any) {
-  shop.selectUser(user?.barcode ?? "");
+  // Select by uuid — combobox users may not have a barcode.
+  if (user?.uuid) shop.selectUserByUuid(user.uuid);
   comboOpen.value = false;
 }
 

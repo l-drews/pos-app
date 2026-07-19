@@ -35,12 +35,21 @@ async function setupDB() {
 }
 
 function setupAppProtocol() {
-  const publicDir = path.join(__dirname, "..", "..", ".output", "public");
+  const publicDir = path.resolve(__dirname, "..", "..", ".output", "public");
   protocol.handle("app", (request) => {
-    const url = new URL(request.url);
-    const hasExt = path.extname(url.pathname) !== "";
-    const relative = hasExt ? url.pathname.slice(1) : "index.html";
-    const filePath = path.join(publicDir, relative);
+    let pathname: string;
+    try {
+      pathname = decodeURIComponent(new URL(request.url).pathname);
+    } catch {
+      return new Response("Bad request", { status: 400 });
+    }
+    // Paths without a file extension are client-side routes → SPA fallback.
+    const hasExt = path.extname(pathname) !== "";
+    const relative = hasExt ? pathname.slice(1) : "index.html";
+    const filePath = path.resolve(publicDir, relative);
+    if (filePath !== publicDir && !filePath.startsWith(publicDir + path.sep)) {
+      return new Response("Not found", { status: 404 });
+    }
     return net.fetch(pathToFileURL(filePath).toString());
   });
 }

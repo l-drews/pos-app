@@ -10,6 +10,16 @@ const to = computed(() =>
 );
 const canPrev = computed(() => page.value > 0);
 const canNext = computed(() => to.value < props.total);
+
+// If the total shrinks (refresh, deletions), don't strand the user on a page
+// past the end.
+watch(
+  () => props.total,
+  (total) => {
+    const maxPage = Math.max(0, Math.ceil(total / props.pageSize) - 1);
+    if (page.value > maxPage) page.value = maxPage;
+  },
+);
 </script>
 
 <template>
