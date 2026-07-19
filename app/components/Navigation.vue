@@ -13,6 +13,9 @@ import {
 
 const reduce = ref(false);
 
+const { version, gitSha, buildTime } = useRuntimeConfig().public;
+const buildInfo = `v${version} (${gitSha}) · built ${formatDateTime(buildTime)}`;
+
 const items = [
   { title: "Shop", icon: Store, path: "/shop" },
   { title: "Products", icon: Tag, path: "/products" },
@@ -46,5 +49,13 @@ const items = [
         :path="item.path"
       />
     </nav>
+    <div
+      class="border-t border-sidebar-border px-2 py-2 text-center text-xs text-muted-foreground truncate"
+      :title="buildInfo"
+      data-testid="build-info"
+    >
+      <template v-if="reduce">{{ gitSha }}</template>
+      <template v-else>v{{ version }} ({{ gitSha }})</template>
+    </div>
   </aside>
 </template>
