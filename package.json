@@ -1,7 +1,9 @@
 {
   "name": "pos-app",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
+  "main": "electron/dist/main.cjs",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -13,7 +15,10 @@
     "db:seed": "tsx server/db/seed.ts",
     "test:e2e": "playwright test",
     "electron:compile": "node electron/build.mjs",
-    "electron:dev": "concurrently -k -n nuxt,electron -c cyan,magenta \"nuxt dev\" \"wait-on http://localhost:3030 && pnpm electron:compile && electron electron/dist/main.cjs\""
+    "electron:dev": "concurrently -k -n nuxt,electron -c cyan,magenta \"nuxt dev\" \"wait-on http://localhost:3030 && pnpm electron:compile && electron electron/dist/main.cjs\"",
+    "electron:build": "nuxt generate && pnpm electron:compile && electron-builder",
+    "electron:build:mac": "nuxt generate && pnpm electron:compile && electron-builder --mac",
+    "electron:build:win": "nuxt generate && pnpm electron:compile && electron-builder --win"
   },
   "dependencies": {
     "@nuxt/eslint": "1.15.2",

@@ -23,6 +23,16 @@ async function setupDB() {
     "migrations",
   );
   migrate(getDb(), { migrationsFolder });
+
+function setupAppProtocol() {
+  const publicDir = path.join(__dirname, "..", "..", ".output", "public");
+  protocol.handle("app", (request) => {
+    const url = new URL(request.url);
+    const hasExt = path.extname(url.pathname) !== "";
+    const relative = hasExt ? url.pathname.slice(1) : "index.html";
+    const filePath = path.join(publicDir, relative);
+    return net.fetch(pathToFileURL(filePath).toString());
+  });
 }
 
 async function setupORPC() {
@@ -60,15 +70,14 @@ async function createWindow() {
     await win.loadURL(DEV_URL);
     win.webContents.openDevTools({ mode: "detach" });
   } else {
-    await win.loadFile(
-      path.join(__dirname, "..", ".output", "public", "index.html"),
-    );
+    await win.loadURL("app://./");
   }
 }
 
 app.whenReady().then(async () => {
   await setupDB();
   await setupORPC();
+  setupAppProtocol();
   await createWindow();
 });
 

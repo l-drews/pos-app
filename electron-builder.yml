@@ -1,0 +1,17 @@
+appId: dev.pos-app.app
+productName: POS App
+directories:
+  output: release
+  buildResources: build
+files:
+  - ".output/public/**/*"
+  - "electron/dist/**/*"
+  - "server/db/migrations/**/*"
+  - "package.json"
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**/*"
+mac:
+  target: dmg
+  category: public.app-category.business
+win:
+  target: nsis
