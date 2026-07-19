@@ -49,3 +49,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm exec electron-builder --publish always
+
+  release-notes:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add install instructions to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --notes "$(cat <<'EOF'
+          ## Installation
+
+          **Windows** — run the `.exe` installer. Installed apps update themselves in-app.
+
+          **macOS** — download the `.dmg` for your machine (`arm64` = Apple Silicon, `x64` = Intel) and drag the app to Applications. The app is not notarized, so macOS quarantines downloads; allow it once per machine:
+
+          ```
+          xattr -d com.apple.quarantine "/Applications/POS App.app"
+          ```
+
+          (or: open it once, then System Settings → Privacy & Security → "Open Anyway")
+          EOF
+          )"

@@ -63,22 +63,22 @@ function refresh() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Items</TableHead>
+            <TableHead>{{ $t("common.user") }}</TableHead>
+            <TableHead>{{ $t("common.items") }}</TableHead>
             <SortableHead column="amount" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Amount
+              {{ $t("common.amount") }}
             </SortableHead>
             <SortableHead column="createdAt" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Date
+              {{ $t("common.date") }}
             </SortableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading && !orders.length">
-            <TableCell colspan="4" class="text-center">Loading...</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("common.loading") }}</TableCell>
           </TableRow>
           <TableRow v-else-if="!orders?.length">
-            <TableCell colspan="4" class="text-center">No orders found</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("orders.none") }}</TableCell>
           </TableRow>
           <TableRow
             v-for="order in orders"

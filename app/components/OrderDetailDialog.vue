@@ -9,7 +9,7 @@ const active = defineModel<boolean>("active", { default: false });
   <Dialog :open="active" @update:open="active = $event">
     <DialogContent class="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>Order details</DialogTitle>
+        <DialogTitle>{{ $t("orders.details") }}</DialogTitle>
         <DialogDescription v-if="props.order">
           <span v-if="props.order.user">
             {{ props.order.user.firstName }} {{ props.order.user.lastName }} ·
@@ -21,15 +21,15 @@ const active = defineModel<boolean>("active", { default: false });
       <Table v-if="props.order">
         <TableHeader>
           <TableRow>
-            <TableHead>Product</TableHead>
-            <TableHead class="text-right">Qty</TableHead>
-            <TableHead class="text-right">Unit price</TableHead>
-            <TableHead class="text-right">Total</TableHead>
+            <TableHead>{{ $t("orders.product") }}</TableHead>
+            <TableHead class="text-right">{{ $t("orders.qty") }}</TableHead>
+            <TableHead class="text-right">{{ $t("orders.unitPrice") }}</TableHead>
+            <TableHead class="text-right">{{ $t("common.total") }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="!props.order.items?.length">
-            <TableCell colspan="4" class="text-center">No items</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("orders.noItemsInOrder") }}</TableCell>
           </TableRow>
           <TableRow v-for="item in props.order.items" :key="item.uuid">
             <TableCell>{{ item.product?.name ?? "—" }}</TableCell>
@@ -42,7 +42,7 @@ const active = defineModel<boolean>("active", { default: false });
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell colspan="3" class="text-right font-medium">Total</TableCell>
+            <TableCell colspan="3" class="text-right font-medium">{{ $t("common.total") }}</TableCell>
             <TableCell class="text-right font-semibold">
               {{ formatCents(props.order.amount ?? 0) }}
             </TableCell>

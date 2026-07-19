@@ -1,5 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
 import { desc, eq, sql } from "drizzle-orm";
 import { type Db, tables } from "~~/server/utils/drizzle";
+import { imagesDir } from "~~/server/utils/images";
 import { generateNextUserBarcode } from "~~/server/utils/barcode";
 import {
   ConflictError,
@@ -7,12 +10,35 @@ import {
   ValidationError,
 } from "~~/server/utils/errors";
 
-// Image upload stub — replace with real implementation when ready
-function saveImage(_buffer?: Buffer): string | null {
-  return null;
+interface ImageUpload {
+  data: Buffer;
+  ext: string;
 }
-function deleteImage(_imagePath: string | null): void {
-  // no-op stub
+
+/** Store an uploaded image on disk; returns the stored file name. */
+function saveImage(image?: ImageUpload): string | null {
+  if (!image?.data?.length) return null;
+  const name = `${crypto.randomUUID()}.${image.ext}`;
+  fs.writeFileSync(path.join(imagesDir(), name), image.data);
+  return name;
+}
+
+function deleteImage(imagePath: string | null): void {
+  if (!imagePath) return;
+  try {
+    fs.unlinkSync(path.join(imagesDir(), path.basename(imagePath)));
+  } catch {
+    // best effort — the file may already be gone
+  }
+}
+
+/** Expose the stored image as the URL both dev (Nitro route) and Electron
+ * (app:// protocol) serve it under. */
+function withImageUrl<T extends { imagePath: string | null }>(user: T) {
+  return {
+    ...user,
+    imageUrl: user.imagePath ? `/images/${user.imagePath}` : null,
+  };
 }
 
 interface CreateUserInput {
@@ -22,7 +48,7 @@ interface CreateUserInput {
   groupUuid?: string;
   barcode?: string;
   generateBarcode?: boolean;
-  file?: Buffer;
+  image?: ImageUpload;
 }
 
 interface UpdateUserInput {
@@ -32,7 +58,7 @@ interface UpdateUserInput {
   groupUuid?: string | null;
   barcode?: string | null;
   generateBarcode?: boolean;
-  file?: Buffer;
+  image?: ImageUpload;
 }
 
 interface CsvRow {
@@ -56,7 +82,7 @@ export class UserService {
         barcode = await this.generateBarcode();
       }
 
-      imagePath = saveImage(input.file);
+      imagePath = saveImage(input.image);
 
       const [user] = await this.db
         .insert(tables.users)
@@ -92,8 +118,8 @@ export class UserService {
     }
 
     let imagePath: string | null | undefined;
-    if (input.file) {
-      imagePath = saveImage(input.file);
+    if (input.image) {
+      imagePath = saveImage(input.image);
     }
 
     const updateData: Record<string, unknown> = {};
@@ -120,7 +146,8 @@ export class UserService {
   }
 
   async getAll() {
-    return this.db.query.users.findMany({ with: { group: true } });
+    const users = await this.db.query.users.findMany({ with: { group: true } });
+    return users.map(withImageUrl);
   }
 
   async getByUuid(uuid: string) {
@@ -130,7 +157,7 @@ export class UserService {
       .where(eq(tables.users.uuid, uuid))
       .get();
     if (!user) throw new NotFoundError("User", uuid);
-    return user;
+    return withImageUrl(user);
   }
 
   async getByBarcode(barcode: string) {
@@ -140,7 +167,7 @@ export class UserService {
       .where(eq(tables.users.barcode, barcode))
       .get();
     if (!user) throw new NotFoundError("User", barcode);
-    return user;
+    return withImageUrl(user);
   }
 
   async delete(uuid: string) {
@@ -279,7 +306,7 @@ export class UserService {
           .get()
       : null;
 
-    return { ...user, group };
+    return withImageUrl({ ...user, group });
   }
 
   private async generateBarcode(): Promise<string> {

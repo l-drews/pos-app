@@ -43,4 +43,24 @@ export const orderRouter = base.router({
     .handler(async ({ context: { db }, input }) => {
       return await makeService(db).getByUser(input.userUuid);
     }),
+
+  getSalesByProduct: base
+    .input(z.object({ productUuid: z.uuid() }))
+    .handler(async ({ context: { db }, input }) => {
+      return await makeService(db).getSalesByProduct(input.productUuid);
+    }),
+
+  getByRange: base
+    .input(
+      z
+        .object({
+          // Epoch milliseconds — the client computes local-day boundaries.
+          from: z.int().min(0),
+          to: z.int().min(0),
+        })
+        .refine((range) => range.to > range.from, "to must be after from"),
+    )
+    .handler(async ({ context: { db }, input }) => {
+      return await makeService(db).getByRange(new Date(input.from), new Date(input.to));
+    }),
 });

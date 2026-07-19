@@ -59,7 +59,7 @@ function refresh() {
   <section class="container mx-auto p-4">
     <ProductForm
       v-model:active="inputForm"
-      title="Add product"
+      :title="$t('products.add')"
       :selected="selected"
       @on-confirm="addOrUpdateItem"
     />
@@ -69,7 +69,7 @@ function refresh() {
     />
 
     <div class="flex justify-between items-center pb-4">
-      <Button @click.stop="showForm(null)">Add product</Button>
+      <Button @click.stop="showForm(null)">{{ $t("products.add") }}</Button>
       <Button variant="outline" size="icon" @click="refresh()">
         <RefreshCw class="size-4" />
       </Button>
@@ -79,20 +79,25 @@ function refresh() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Barcode</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead class="w-20 text-right">Actions</TableHead>
+            <TableHead>{{ $t("common.name") }}</TableHead>
+            <TableHead>{{ $t("common.barcode") }}</TableHead>
+            <TableHead>{{ $t("common.price") }}</TableHead>
+            <TableHead class="w-20 text-right">{{ $t("common.actions") }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading">
-            <TableCell colspan="4" class="text-center">Loading...</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("common.loading") }}</TableCell>
           </TableRow>
           <TableRow v-else-if="!products?.length">
-            <TableCell colspan="4" class="text-center">No products found</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("products.none") }}</TableCell>
           </TableRow>
-          <TableRow v-for="product in products" :key="product.uuid">
+          <TableRow
+            v-for="product in products"
+            :key="product.uuid"
+            class="cursor-pointer"
+            @click="navigateTo(`/products/${product.uuid}`)"
+          >
             <TableCell>{{ product.name }}</TableCell>
             <TableCell>{{ product.barcode }}</TableCell>
             <TableCell>{{ formatCents(product.price) }}</TableCell>

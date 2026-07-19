@@ -1,4 +1,4 @@
-import { asc, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, lt } from "drizzle-orm";
 import { type Db, tables } from "~~/server/utils/drizzle";
 import { ValidationError } from "~~/server/utils/errors";
 import { TransactionService } from "~~/server/components/transactions/service";
@@ -101,6 +101,32 @@ export class OrderService {
     });
     const total = this.db.select({ value: count() }).from(tables.orders).get();
     return { rows, total: total?.value ?? 0 };
+  }
+
+  async getByRange(from: Date, to: Date) {
+    return this.db.query.orders.findMany({
+      where: and(
+        gte(tables.orders.createdAt, from),
+        lt(tables.orders.createdAt, to),
+      ),
+      with: {
+        user: true,
+        items: { with: { product: true } },
+      },
+      orderBy: desc(tables.orders.createdAt),
+    });
+  }
+
+  // One row per order containing the product (the cart upserts per product),
+  // with the order and its user for date/context display.
+  async getSalesByProduct(productUuid: string) {
+    return this.db.query.orderItems.findMany({
+      where: eq(tables.orderItems.productUuid, productUuid),
+      with: {
+        order: { with: { user: true } },
+      },
+      orderBy: desc(tables.orderItems.createdAt),
+    });
   }
 
   async getByUser(userUuid: string) {

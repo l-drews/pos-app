@@ -67,12 +67,12 @@ function refresh() {
   <section class="container mx-auto p-4">
     <TransactionForm
       v-model:active="inputForm"
-      title="Create transaction"
+      :title="$t('transactions.create')"
       @on-confirm="addItem"
     />
 
     <div class="flex justify-between items-center pb-4">
-      <Button @click.stop="showForm()">Create transaction</Button>
+      <Button @click.stop="showForm()">{{ $t("transactions.create") }}</Button>
       <Button variant="outline" size="icon" @click="refresh()">
         <RefreshCw class="size-4" />
       </Button>
@@ -82,28 +82,28 @@ function refresh() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Type</TableHead>
+            <TableHead>{{ $t("common.user") }}</TableHead>
+            <TableHead>{{ $t("common.type") }}</TableHead>
             <SortableHead column="amount" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Amount
+              {{ $t("common.amount") }}
             </SortableHead>
             <SortableHead column="createdAt" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Date
+              {{ $t("common.date") }}
             </SortableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading && !transactions.length">
-            <TableCell colspan="4" class="text-center">Loading...</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("common.loading") }}</TableCell>
           </TableRow>
           <TableRow v-else-if="!transactions.length">
-            <TableCell colspan="4" class="text-center">No transactions found</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("transactions.none") }}</TableCell>
           </TableRow>
           <TableRow v-for="tx in transactions" :key="(tx as any).uuid">
             <TableCell>{{ (tx as any).user?.firstName }} {{ (tx as any).user?.lastName }}</TableCell>
             <TableCell>
               <Badge :variant="tx.amount >= 0 ? 'default' : 'destructive'">
-                {{ tx.amount >= 0 ? "deposit" : "withdraw" }}
+                {{ tx.amount >= 0 ? $t("transactions.depositBadge") : $t("transactions.withdrawBadge") }}
               </Badge>
             </TableCell>
             <TableCell>{{ formatCents(Math.abs(tx.amount)) }}</TableCell>

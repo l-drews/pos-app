@@ -10,6 +10,7 @@ import {
 } from "lucide-vue-next";
 
 const shop = useShopStore();
+const { t } = useI18n();
 
 const barcode = ref("");
 const comboOpen = ref(false);
@@ -75,20 +76,20 @@ function selectShopUser(user: any) {
 
 const userData = computed(() => [
   {
-    label: "Name:",
+    label: `${t("common.name")}:`,
     value: shop.currentUser
       ? `${shop.currentUser.firstName} ${shop.currentUser.lastName}`
       : "-",
   },
   {
-    label: "Birthdate:",
+    label: `${t("shop.birthdate")}:`,
     value: shop.currentUser?.birthDate
       ? formatDate(shop.currentUser.birthDate)
       : "-",
   },
-  { label: "Group:", value: (shop.currentUser as any)?.group?.name || "-" },
+  { label: `${t("common.group")}:`, value: (shop.currentUser as any)?.group?.name || "-" },
   {
-    label: "Balance:",
+    label: `${t("common.balance")}:`,
     value: shop.currentUser ? formatCents(shop.currentUser.balance ?? 0) : "-",
   },
 ]);
@@ -103,15 +104,15 @@ const userData = computed(() => [
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead class="w-[130px]">Count</TableHead>
+                <TableHead>{{ $t("common.name") }}</TableHead>
+                <TableHead>{{ $t("common.price") }}</TableHead>
+                <TableHead class="w-[130px]">{{ $t("common.count") }}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow v-if="!shop.cartItems?.length">
                 <TableCell colspan="3" class="text-center">
-                  No items found. Please scan an item.
+                  {{ $t("shop.noItems") }}
                 </TableCell>
               </TableRow>
               <TableRow
@@ -171,7 +172,7 @@ const userData = computed(() => [
                 <span class="truncate">{{
                   shop.currentUser
                     ? userLabel(shop.currentUser)
-                    : "Select a user..."
+                    : $t("shop.selectUser")
                 }}</span>
                 <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
@@ -180,9 +181,9 @@ const userData = computed(() => [
               <Command>
                 <CommandInput
                   v-model="shop.searchString"
-                  placeholder="Search user..."
+                  :placeholder="$t('shop.searchUser')"
                 />
-                <CommandEmpty>No users found.</CommandEmpty>
+                <CommandEmpty>{{ $t("shop.noUsersFound") }}</CommandEmpty>
                 <CommandList>
                   <CommandGroup>
                     <CommandItem
@@ -222,13 +223,13 @@ const userData = computed(() => [
         </div>
         <div>
           <div class="flex flex-row justify-between pb-2">
-            <span class="text-muted-foreground">Total:</span>
+            <span class="text-muted-foreground">{{ $t("shop.totalLabel") }}</span>
             <span class="font-semibold">{{
               formatCents(shop.paymentTotal)
             }}</span>
           </div>
           <div class="flex flex-row justify-between pb-2">
-            <span class="text-muted-foreground">Today's total:</span>
+            <span class="text-muted-foreground">{{ $t("shop.todaysTotal") }}</span>
             <span class="font-semibold">{{
               formatCents(shop.todaysOrderTotal)
             }}</span>
@@ -238,7 +239,7 @@ const userData = computed(() => [
             :disabled="shop.disablePayment"
             @click="shop.createOrder()"
           >
-            Pay
+            {{ $t("shop.pay") }}
           </Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useQueryCache } from "@pinia/colada";
-import { ArrowLeft, Pencil, Trash2, Banknote } from "lucide-vue-next";
+import { ArrowLeft, Pencil, Trash2, Banknote, Wallet } from "lucide-vue-next";
 
 const route = useRoute();
 const orpc = useOrpc();
@@ -35,6 +35,7 @@ const selectedUser = computed(() => {
 });
 
 const editOpen = ref(false);
+const transactionOpen = ref(false);
 const withdrawConfirm = ref(false);
 const deleteConfirm = ref(false);
 
@@ -55,7 +56,8 @@ const updateMutation = useToastMutation({
   onSettled: invalidateUsers,
 });
 
-const withdrawMutation = useToastMutation({
+// Used by both the deposit/withdraw dialog and the "withdraw all" action.
+const transactionMutation = useToastMutation({
   ...orpc.transactions.create.mutationOptions(),
   onSettled: () => {
     invalidateUsers();
@@ -75,7 +77,11 @@ function onEditConfirm(payload: any) {
 
 function withdrawAll() {
   if (!user.value || user.value.balance <= 0) return;
-  withdrawMutation.mutate({ userUuid: uuid.value, amount: -user.value.balance });
+  transactionMutation.mutate({ userUuid: uuid.value, amount: -user.value.balance });
+}
+
+function onTransactionConfirm(tx: { userUuid: string; amount: number }) {
+  transactionMutation.mutate(tx);
 }
 
 function onDeleteConfirm() {
@@ -88,35 +94,50 @@ function onDeleteConfirm() {
     <UserForm
       v-if="selectedUser"
       v-model:active="editOpen"
-      title="Edit user"
+      :title="$t('users.editTitle')"
       :selected="(selectedUser as any)"
       @on-confirm="onEditConfirm"
     />
     <ConfirmDialog
       v-model:active="withdrawConfirm"
-      title="Withdraw balance"
-      :body="`Withdraw the full balance of ${formatCents(user?.balance ?? 0)} from ${user?.firstName} ${user?.lastName}?`"
-      :buttons="['Cancel', 'Withdraw']"
+      :title="$t('users.withdrawTitle')"
+      :body="
+        $t('users.withdrawBody', {
+          amount: formatCents(user?.balance ?? 0),
+          name: `${user?.firstName} ${user?.lastName}`,
+        })
+      "
+      :buttons="[$t('common.cancel'), $t('users.withdraw')]"
       @on-confirm="withdrawAll"
     />
     <ConfirmDialog
       v-model:active="deleteConfirm"
-      title="Delete user"
-      :body="`Permanently delete ${user?.firstName} ${user?.lastName} along with all related orders and transactions? This cannot be undone.`"
-      :buttons="['Cancel', 'Delete']"
+      :title="$t('users.deleteTitle')"
+      :body="$t('users.deleteBody', { name: `${user?.firstName} ${user?.lastName}` })"
+      :buttons="[$t('common.cancel'), $t('common.delete')]"
       @on-confirm="onDeleteConfirm"
     />
     <OrderDetailDialog v-model:active="orderDetailOpen" :order="selectedOrder" />
+    <TransactionForm
+      v-model:active="transactionOpen"
+      :title="$t('transactions.create')"
+      :user="(user as any) ?? null"
+      @on-confirm="onTransactionConfirm"
+    />
 
     <div class="flex items-center justify-between">
       <Button variant="ghost" size="sm" @click="navigateTo('/users')">
         <ArrowLeft class="mr-2 size-4" />
-        Back
+        {{ $t("common.back") }}
       </Button>
       <div class="flex gap-2">
         <Button variant="outline" :disabled="!user" @click="editOpen = true">
           <Pencil class="mr-2 size-4" />
-          Edit
+          {{ $t("common.edit") }}
+        </Button>
+        <Button variant="outline" :disabled="!user" @click="transactionOpen = true">
+          <Wallet class="mr-2 size-4" />
+          {{ $t("transactions.depositWithdraw") }}
         </Button>
         <Button
           variant="outline"
@@ -124,25 +145,25 @@ function onDeleteConfirm() {
           @click="withdrawConfirm = true"
         >
           <Banknote class="mr-2 size-4" />
-          Withdraw all
+          {{ $t("users.withdrawAll") }}
         </Button>
         <Button
           variant="destructive"
           :disabled="!user || user.balance !== 0"
-          :title="user && user.balance !== 0 ? 'Withdraw the balance before deleting' : undefined"
+          :title="user && user.balance !== 0 ? $t('users.deleteBlocked') : undefined"
           @click="deleteConfirm = true"
         >
           <Trash2 class="mr-2 size-4" />
-          Delete
+          {{ $t("common.delete") }}
         </Button>
       </div>
     </div>
 
     <div v-if="isLoading" class="py-12 text-center text-muted-foreground">
-      Loading...
+      {{ $t("common.loading") }}
     </div>
     <div v-else-if="!user" class="py-12 text-center text-muted-foreground">
-      User not found
+      {{ $t("users.notFound") }}
     </div>
 
     <template v-else>
@@ -153,39 +174,40 @@ function onDeleteConfirm() {
             {{ user.firstName }} {{ user.lastName }}
           </h1>
           <p class="text-sm text-muted-foreground">
-            Barcode: {{ user.barcode ?? "—" }} · Born {{ formatDate(user.birthDate) }}
+            {{ $t("common.barcode") }}: {{ user.barcode ?? "—" }} ·
+            {{ $t("users.born") }} {{ formatDate(user.birthDate) }}
           </p>
         </div>
       </div>
 
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Balance</p>
+          <p class="text-sm text-muted-foreground">{{ $t("common.balance") }}</p>
           <p class="text-2xl font-bold">{{ formatCents(user.balance ?? 0) }}</p>
         </div>
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Orders</p>
+          <p class="text-sm text-muted-foreground">{{ $t("common.orders") }}</p>
           <p class="text-2xl font-bold">{{ totalOrders }}</p>
         </div>
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Total spent</p>
+          <p class="text-sm text-muted-foreground">{{ $t("users.totalSpent") }}</p>
           <p class="text-2xl font-bold">{{ formatCents(totalSpent) }}</p>
         </div>
       </div>
 
       <div class="rounded-lg border bg-card p-4">
-        <h2 class="pb-3 text-lg font-medium">Orders</h2>
+        <h2 class="pb-3 text-lg font-medium">{{ $t("common.orders") }}</h2>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Items</TableHead>
-              <TableHead class="text-right">Amount</TableHead>
+              <TableHead>{{ $t("common.date") }}</TableHead>
+              <TableHead>{{ $t("common.items") }}</TableHead>
+              <TableHead class="text-right">{{ $t("common.amount") }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow v-if="!orders?.length">
-              <TableCell colspan="3" class="text-center">No orders yet</TableCell>
+              <TableCell colspan="3" class="text-center">{{ $t("users.noOrders") }}</TableCell>
             </TableRow>
             <TableRow
               v-for="order in orders"
