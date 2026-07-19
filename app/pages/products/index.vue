@@ -92,7 +92,12 @@ function refresh() {
           <TableRow v-else-if="!products?.length">
             <TableCell colspan="4" class="text-center">No products found</TableCell>
           </TableRow>
-          <TableRow v-for="product in products" :key="product.uuid">
+          <TableRow
+            v-for="product in products"
+            :key="product.uuid"
+            class="cursor-pointer"
+            @click="navigateTo(`/products/${product.uuid}`)"
+          >
             <TableCell>{{ product.name }}</TableCell>
             <TableCell>{{ product.barcode }}</TableCell>
             <TableCell>{{ formatCents(product.price) }}</TableCell>

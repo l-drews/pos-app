@@ -8,6 +8,7 @@ const queryCache = useQueryCache();
 const { data: orders, isLoading } = useQuery(orpc.orders.getAll.queryOptions());
 
 interface DailySummary {
+  key: string;
   date: Date;
   orderCount: number;
   total: number;
@@ -17,11 +18,11 @@ interface DailySummary {
 const dailySummaries = computed<DailySummary[]>(() => {
   if (!orders.value) return [];
 
-  const byDay = new Map<string, { date: Date; orderCount: number; total: number }>();
+  const byDay = new Map<string, { key: string; date: Date; orderCount: number; total: number }>();
   for (const order of orders.value as any[]) {
     const createdAt = new Date(order.createdAt);
-    const key = createdAt.toDateString();
-    const entry = byDay.get(key) ?? { date: createdAt, orderCount: 0, total: 0 };
+    const key = toLocalISODate(createdAt);
+    const entry = byDay.get(key) ?? { key, date: createdAt, orderCount: 0, total: 0 };
     entry.orderCount += 1;
     entry.total += order.amount ?? 0;
     byDay.set(key, entry);
@@ -66,7 +67,12 @@ function refresh() {
           <TableRow v-else-if="!dailySummaries.length">
             <TableCell colspan="4" class="text-center">No orders found</TableCell>
           </TableRow>
-          <TableRow v-for="day in dailySummaries" :key="day.date.toDateString()">
+          <TableRow
+            v-for="day in dailySummaries"
+            :key="day.key"
+            class="cursor-pointer"
+            @click="navigateTo(`/summary/${day.key}`)"
+          >
             <TableCell>{{ formatDate(day.date) }}</TableCell>
             <TableCell>{{ day.orderCount }}</TableCell>
             <TableCell>{{ formatCents(day.average) }}</TableCell>
