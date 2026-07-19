@@ -5,19 +5,41 @@ import { RefreshCw } from "lucide-vue-next";
 const orpc = useOrpc();
 const queryCache = useQueryCache();
 
-const { data: rawTransactions, isLoading } = useQuery(
-  orpc.transactions.getAll.queryOptions(),
+const PAGE_SIZE = 50;
+const page = ref(0);
+const sortBy = ref<"createdAt" | "amount">("createdAt");
+const sortDir = ref<"asc" | "desc">("desc");
+
+const { data, isLoading } = useQuery(
+  orpc.transactions.list.queryOptions({
+    input: () => ({
+      limit: PAGE_SIZE,
+      offset: page.value * PAGE_SIZE,
+      sortBy: sortBy.value,
+      sortDir: sortDir.value,
+    }),
+  }),
 );
 
-const transactions = computed(() => {
-  if (!rawTransactions.value) return [];
-  return [...rawTransactions.value].sort(
-    (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
-});
+const transactions = computed(() => data.value?.rows ?? []);
+const total = computed(() => data.value?.total ?? 0);
+
+function toggleSort(column: "createdAt" | "amount") {
+  if (sortBy.value === column) {
+    sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
+  } else {
+    sortBy.value = column;
+    sortDir.value = "desc";
+  }
+  page.value = 0;
+}
 
 const createMutation = useMutation({
   ...orpc.transactions.create.mutationOptions(),
+  // A new transaction is the newest row, so jump back to the first page.
+  onSuccess: () => {
+    page.value = 0;
+  },
   onSettled: () => {
     queryCache.invalidateQueries({ key: orpc.transactions.key() });
     queryCache.invalidateQueries({ key: orpc.users.key() });
@@ -60,8 +82,12 @@ function refresh() {
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Date</TableHead>
+            <SortableHead column="amount" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Amount
+            </SortableHead>
+            <SortableHead column="createdAt" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Date
+            </SortableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -83,6 +109,7 @@ function refresh() {
           </TableRow>
         </TableBody>
       </Table>
+      <TablePagination v-model:page="page" :page-size="PAGE_SIZE" :total="total" />
     </div>
   </section>
 </template>

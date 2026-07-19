@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { useQuery, useQueryCache } from "@pinia/colada";
 import { Pencil, Trash2, RefreshCw } from "lucide-vue-next";
 
 const orpc = useOrpc();
@@ -7,17 +7,17 @@ const queryCache = useQueryCache();
 
 const { data: products, isLoading } = useQuery(orpc.products.getAll.queryOptions());
 
-const createMutation = useMutation({
+const createMutation = useToastMutation({
   ...orpc.products.create.mutationOptions(),
   onSettled: () => queryCache.invalidateQueries({ key: orpc.products.key() }),
 });
 
-const updateMutation = useMutation({
+const updateMutation = useToastMutation({
   ...orpc.products.update.mutationOptions(),
   onSettled: () => queryCache.invalidateQueries({ key: orpc.products.key() }),
 });
 
-const deleteMutation = useMutation({
+const deleteMutation = useToastMutation({
   ...orpc.products.delete.mutationOptions(),
   onSettled: () => queryCache.invalidateQueries({ key: orpc.products.key() }),
 });

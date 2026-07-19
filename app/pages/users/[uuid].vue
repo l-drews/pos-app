@@ -1,0 +1,207 @@
+<script setup lang="ts">
+import { useQuery, useQueryCache } from "@pinia/colada";
+import { ArrowLeft, Pencil, Trash2, Banknote } from "lucide-vue-next";
+
+const route = useRoute();
+const orpc = useOrpc();
+const queryCache = useQueryCache();
+
+const uuid = computed(() => route.params.uuid as string);
+
+const { data: user, isLoading } = useQuery(
+  orpc.users.getByUuid.queryOptions({ input: () => ({ uuid: uuid.value }) }),
+);
+
+const { data: orders } = useQuery(
+  orpc.orders.getByUser.queryOptions({ input: () => ({ userUuid: uuid.value }) }),
+);
+
+const totalOrders = computed(() => orders.value?.length ?? 0);
+const totalSpent = computed(() =>
+  (orders.value ?? []).reduce((sum: number, o: any) => sum + (o.amount ?? 0), 0),
+);
+
+// The edit form's date input expects a "YYYY-MM-DD" string, but birthDate
+// arrives as a Date — normalize it so the field pre-fills when editing.
+const selectedUser = computed(() => {
+  if (!user.value) return null;
+  const b = (user.value as any).birthDate;
+  let birthDate: string | null = null;
+  if (b) {
+    const d = b instanceof Date ? b : new Date(b);
+    if (!isNaN(d.getTime())) birthDate = d.toISOString().slice(0, 10);
+  }
+  return { ...user.value, birthDate };
+});
+
+const editOpen = ref(false);
+const withdrawConfirm = ref(false);
+const deleteConfirm = ref(false);
+
+const selectedOrder = ref<any>(null);
+const orderDetailOpen = ref(false);
+
+function openOrder(order: any) {
+  selectedOrder.value = order;
+  orderDetailOpen.value = true;
+}
+
+function invalidateUsers() {
+  queryCache.invalidateQueries({ key: orpc.users.key() });
+}
+
+const updateMutation = useToastMutation({
+  ...orpc.users.update.mutationOptions(),
+  onSettled: invalidateUsers,
+});
+
+const withdrawMutation = useToastMutation({
+  ...orpc.transactions.create.mutationOptions(),
+  onSettled: () => {
+    invalidateUsers();
+    queryCache.invalidateQueries({ key: orpc.transactions.key() });
+  },
+});
+
+const deleteMutation = useToastMutation({
+  ...orpc.users.delete.mutationOptions(),
+  onSuccess: () => navigateTo("/users"),
+  onSettled: invalidateUsers,
+});
+
+function onEditConfirm(payload: any) {
+  updateMutation.mutate(payload);
+}
+
+function withdrawAll() {
+  if (!user.value || user.value.balance <= 0) return;
+  withdrawMutation.mutate({ userUuid: uuid.value, amount: -user.value.balance });
+}
+
+function onDeleteConfirm() {
+  deleteMutation.mutate({ uuid: uuid.value });
+}
+</script>
+
+<template>
+  <section class="container mx-auto p-4 space-y-4">
+    <UserForm
+      v-if="selectedUser"
+      v-model:active="editOpen"
+      title="Edit user"
+      :selected="(selectedUser as any)"
+      @on-confirm="onEditConfirm"
+    />
+    <ConfirmDialog
+      v-model:active="withdrawConfirm"
+      title="Withdraw balance"
+      :body="`Withdraw the full balance of ${formatCents(user?.balance ?? 0)} from ${user?.firstName} ${user?.lastName}?`"
+      :buttons="['Cancel', 'Withdraw']"
+      @on-confirm="withdrawAll"
+    />
+    <ConfirmDialog
+      v-model:active="deleteConfirm"
+      title="Delete user"
+      :body="`Permanently delete ${user?.firstName} ${user?.lastName} along with all related orders and transactions? This cannot be undone.`"
+      :buttons="['Cancel', 'Delete']"
+      @on-confirm="onDeleteConfirm"
+    />
+    <OrderDetailDialog v-model:active="orderDetailOpen" :order="selectedOrder" />
+
+    <div class="flex items-center justify-between">
+      <Button variant="ghost" size="sm" @click="navigateTo('/users')">
+        <ArrowLeft class="mr-2 size-4" />
+        Back
+      </Button>
+      <div class="flex gap-2">
+        <Button variant="outline" :disabled="!user" @click="editOpen = true">
+          <Pencil class="mr-2 size-4" />
+          Edit
+        </Button>
+        <Button
+          variant="outline"
+          :disabled="!user || user.balance <= 0"
+          @click="withdrawConfirm = true"
+        >
+          <Banknote class="mr-2 size-4" />
+          Withdraw all
+        </Button>
+        <Button
+          variant="destructive"
+          :disabled="!user || user.balance !== 0"
+          :title="user && user.balance !== 0 ? 'Withdraw the balance before deleting' : undefined"
+          @click="deleteConfirm = true"
+        >
+          <Trash2 class="mr-2 size-4" />
+          Delete
+        </Button>
+      </div>
+    </div>
+
+    <div v-if="isLoading" class="py-12 text-center text-muted-foreground">
+      Loading...
+    </div>
+    <div v-else-if="!user" class="py-12 text-center text-muted-foreground">
+      User not found
+    </div>
+
+    <template v-else>
+      <div class="flex items-center gap-4 rounded-lg border bg-card p-6">
+        <UserAvatar class="size-20" :src="(user as any).imageUrl" />
+        <div>
+          <h1 class="text-2xl font-semibold">
+            {{ user.firstName }} {{ user.lastName }}
+          </h1>
+          <p class="text-sm text-muted-foreground">
+            Barcode: {{ user.barcode ?? "—" }} · Born {{ formatDate(user.birthDate) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="rounded-lg border bg-card p-4">
+          <p class="text-sm text-muted-foreground">Balance</p>
+          <p class="text-2xl font-bold">{{ formatCents(user.balance ?? 0) }}</p>
+        </div>
+        <div class="rounded-lg border bg-card p-4">
+          <p class="text-sm text-muted-foreground">Orders</p>
+          <p class="text-2xl font-bold">{{ totalOrders }}</p>
+        </div>
+        <div class="rounded-lg border bg-card p-4">
+          <p class="text-sm text-muted-foreground">Total spent</p>
+          <p class="text-2xl font-bold">{{ formatCents(totalSpent) }}</p>
+        </div>
+      </div>
+
+      <div class="rounded-lg border bg-card p-4">
+        <h2 class="pb-3 text-lg font-medium">Orders</h2>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Items</TableHead>
+              <TableHead class="text-right">Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow v-if="!orders?.length">
+              <TableCell colspan="3" class="text-center">No orders yet</TableCell>
+            </TableRow>
+            <TableRow
+              v-for="order in orders"
+              :key="(order as any).uuid"
+              class="cursor-pointer"
+              @click="openOrder(order)"
+            >
+              <TableCell>{{ formatDateTime((order as any).createdAt) }}</TableCell>
+              <TableCell>{{ (order as any).items?.length ?? 0 }}</TableCell>
+              <TableCell class="text-right">
+                {{ formatCents((order as any).amount ?? 0) }}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    </template>
+  </section>
+</template>

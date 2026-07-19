@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { asc, count, desc, eq, sql } from "drizzle-orm";
 import { type Db, type Tx, tables } from "~~/server/utils/drizzle";
 import { NotFoundError, ValidationError } from "~~/server/utils/errors";
 
@@ -61,5 +61,29 @@ export class TransactionService {
         order: true,
       },
     });
+  }
+
+  async list(
+    limit: number,
+    offset: number,
+    sortBy: "createdAt" | "amount" = "createdAt",
+    sortDir: "asc" | "desc" = "desc",
+  ) {
+    const column =
+      sortBy === "amount"
+        ? tables.transactions.amount
+        : tables.transactions.createdAt;
+    const direction = sortDir === "asc" ? asc : desc;
+    const rows = await this.db.query.transactions.findMany({
+      with: { user: true },
+      orderBy: direction(column),
+      limit,
+      offset,
+    });
+    const total = this.db
+      .select({ value: count() })
+      .from(tables.transactions)
+      .get();
+    return { rows, total: total?.value ?? 0 };
   }
 }

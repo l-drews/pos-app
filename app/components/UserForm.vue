@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useQuery } from "@pinia/colada";
 import { ImagePlus } from "lucide-vue-next";
+import { z } from "zod";
 
 interface User {
   uuid?: string;
@@ -29,6 +30,14 @@ const orpc = useOrpc();
 
 const { data: groups } = useQuery(orpc.groups.getAll.queryOptions({ enabled: active }));
 
+const userSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
+  birthDate: z.string().min(1, "Date of birth is required"),
+});
+
+type FieldErrors = Partial<Record<keyof z.infer<typeof userSchema>, string>>;
+
 const user = ref<User>({
   firstName: "",
   lastName: "",
@@ -36,6 +45,8 @@ const user = ref<User>({
   groupUuid: null,
   generateBarcode: true,
 });
+
+const errors = ref<FieldErrors>({});
 
 const image = ref<File | null>(null);
 const preview = ref<string | null>(null);
@@ -45,6 +56,7 @@ watch(active, (val) => {
   if (val) {
     image.value = null;
     preview.value = null;
+    errors.value = {};
     if (props.selected) {
       user.value = {
         firstName: props.selected.firstName,
@@ -78,8 +90,6 @@ watch(image, (val) => {
   }
 });
 
-const defaultImageUrl = "/images/default-avatar.png";
-
 function onFileSelect(e: Event) {
   const files = (e.target as HTMLInputElement).files;
   if (files?.length) image.value = files[0] ?? null;
@@ -91,12 +101,26 @@ function onCancel() {
 }
 
 function onConfirm() {
-  const result = { ...user.value };
-  result.generateBarcode = result.barcode == null;
-  delete result.barcode;
-  result.uuid = props.selected?.uuid;
+  const result = validate(userSchema, {
+    firstName: user.value.firstName,
+    lastName: user.value.lastName,
+    birthDate: user.value.birthDate ?? "",
+  });
+  if (!result.success) {
+    errors.value = result.errors;
+    return;
+  }
+  errors.value = {};
+
+  const payload: User = { ...user.value };
+  payload.generateBarcode = payload.barcode == null;
+  delete payload.barcode;
+  payload.uuid = props.selected?.uuid;
+  if (payload.groupUuid == null) {
+    delete (payload as Partial<User>).groupUuid;
+  }
   active.value = false;
-  emit("on-confirm", result);
+  emit("on-confirm", payload);
 }
 </script>
 
@@ -108,10 +132,7 @@ function onConfirm() {
       </DialogHeader>
       <div class="grid gap-4 py-4">
         <div class="flex items-center justify-evenly">
-          <img
-            class="h-24 w-24 object-cover rounded-full border"
-            :src="preview ?? defaultImageUrl"
-          />
+          <UserAvatar class="size-24" :src="preview" />
           <div>
             <input
               ref="fileInput"
@@ -130,10 +151,16 @@ function onConfirm() {
           <div class="grid gap-2">
             <Label for="user-first-name">First Name</Label>
             <Input id="user-first-name" v-model="user.firstName" placeholder="First Name" />
+            <p v-if="errors.firstName" class="text-sm text-destructive">
+              {{ errors.firstName }}
+            </p>
           </div>
           <div class="grid gap-2">
             <Label for="user-last-name">Last Name</Label>
             <Input id="user-last-name" v-model="user.lastName" placeholder="Last Name" />
+            <p v-if="errors.lastName" class="text-sm text-destructive">
+              {{ errors.lastName }}
+            </p>
           </div>
         </div>
         <div class="grid gap-2">
@@ -144,6 +171,9 @@ function onConfirm() {
             type="date"
             @update:model-value="user.birthDate = ($event as string) || null"
           />
+          <p v-if="errors.birthDate" class="text-sm text-destructive">
+            {{ errors.birthDate }}
+          </p>
         </div>
         <div class="flex items-center gap-2">
           <Switch

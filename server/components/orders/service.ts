@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 import { type Db, tables } from "~~/server/utils/drizzle";
 import { ValidationError } from "~~/server/utils/errors";
 import { TransactionService } from "~~/server/components/transactions/service";
@@ -75,12 +75,41 @@ export class OrderService {
     });
   }
 
+  // Lean list of all orders (columns only) for aggregations like the shop's
+  // daily total and the summary page. The paginated `list` is for the UI table.
   async getAll() {
-    return this.db.query.orders.findMany({
+    return this.db.query.orders.findMany();
+  }
+
+  async list(
+    limit: number,
+    offset: number,
+    sortBy: "createdAt" | "amount" = "createdAt",
+    sortDir: "asc" | "desc" = "desc",
+  ) {
+    const column =
+      sortBy === "amount" ? tables.orders.amount : tables.orders.createdAt;
+    const direction = sortDir === "asc" ? asc : desc;
+    const rows = await this.db.query.orders.findMany({
       with: {
         user: true,
-        items: true,
+        items: { with: { product: true } },
       },
+      orderBy: direction(column),
+      limit,
+      offset,
+    });
+    const total = this.db.select({ value: count() }).from(tables.orders).get();
+    return { rows, total: total?.value ?? 0 };
+  }
+
+  async getByUser(userUuid: string) {
+    return this.db.query.orders.findMany({
+      where: eq(tables.orders.userUuid, userUuid),
+      with: {
+        items: { with: { product: true } },
+      },
+      orderBy: desc(tables.orders.createdAt),
     });
   }
 }

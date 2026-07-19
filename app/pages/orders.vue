@@ -5,7 +5,42 @@ import { RefreshCw } from "lucide-vue-next";
 const orpc = useOrpc();
 const queryCache = useQueryCache();
 
-const { data: orders, isLoading } = useQuery(orpc.orders.getAll.queryOptions());
+const PAGE_SIZE = 50;
+const page = ref(0);
+const sortBy = ref<"createdAt" | "amount">("createdAt");
+const sortDir = ref<"asc" | "desc">("desc");
+
+const { data, isLoading } = useQuery(
+  orpc.orders.list.queryOptions({
+    input: () => ({
+      limit: PAGE_SIZE,
+      offset: page.value * PAGE_SIZE,
+      sortBy: sortBy.value,
+      sortDir: sortDir.value,
+    }),
+  }),
+);
+
+const orders = computed(() => data.value?.rows ?? []);
+const total = computed(() => data.value?.total ?? 0);
+
+function toggleSort(column: "createdAt" | "amount") {
+  if (sortBy.value === column) {
+    sortDir.value = sortDir.value === "asc" ? "desc" : "asc";
+  } else {
+    sortBy.value = column;
+    sortDir.value = "desc";
+  }
+  page.value = 0;
+}
+
+const selectedOrder = ref<any>(null);
+const detailOpen = ref(false);
+
+function openOrder(order: any) {
+  selectedOrder.value = order;
+  detailOpen.value = true;
+}
 
 function refresh() {
   queryCache.invalidateQueries({ key: orpc.orders.key() });
@@ -14,6 +49,8 @@ function refresh() {
 
 <template>
   <section class="container mx-auto p-4">
+    <OrderDetailDialog v-model:active="detailOpen" :order="selectedOrder" />
+
     <div class="flex justify-end items-center pb-4">
       <Button variant="outline" size="icon" @click="refresh()">
         <RefreshCw class="size-4" />
@@ -26,8 +63,12 @@ function refresh() {
           <TableRow>
             <TableHead>User</TableHead>
             <TableHead>Items</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Date</TableHead>
+            <SortableHead column="amount" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Amount
+            </SortableHead>
+            <SortableHead column="createdAt" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
+              Date
+            </SortableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -37,7 +78,12 @@ function refresh() {
           <TableRow v-else-if="!orders?.length">
             <TableCell colspan="4" class="text-center">No orders found</TableCell>
           </TableRow>
-          <TableRow v-for="order in orders" :key="(order as any).uuid">
+          <TableRow
+            v-for="order in orders"
+            :key="(order as any).uuid"
+            class="cursor-pointer"
+            @click="openOrder(order)"
+          >
             <TableCell>{{ (order as any).user?.firstName }} {{ (order as any).user?.lastName }}</TableCell>
             <TableCell>{{ (order as any).items?.length ?? 0 }}</TableCell>
             <TableCell>{{ formatCents((order as any).amount ?? 0) }}</TableCell>
@@ -45,6 +91,7 @@ function refresh() {
           </TableRow>
         </TableBody>
       </Table>
+      <TablePagination v-model:page="page" :page-size="PAGE_SIZE" :total="total" />
     </div>
   </section>
 </template>

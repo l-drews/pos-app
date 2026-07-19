@@ -1,10 +1,18 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, net, protocol } from "electron";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/message-port";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 const DEV_URL = "http://localhost:3030";
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "app",
+    privileges: { secure: true, standard: true, supportFetchAPI: true },
+  },
+]);
 
 let handler: InstanceType<typeof RPCHandler> | null = null;
 
@@ -22,7 +30,9 @@ async function setupDB() {
     "db",
     "migrations",
   );
-  migrate(getDb(), { migrationsFolder });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  migrate(getDb() as any, { migrationsFolder });
+}
 
 function setupAppProtocol() {
   const publicDir = path.join(__dirname, "..", "..", ".output", "public");

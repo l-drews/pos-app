@@ -1,29 +1,43 @@
 <script setup lang="ts">
-import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { useQuery, useQueryCache } from "@pinia/colada";
 import { Pencil, Trash2, RefreshCw, Upload, Download } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
 
 const { data: users, isLoading } = useQuery(orpc.users.getAll.queryOptions());
 
-const createMutation = useMutation({
+const createMutation = useToastMutation({
   ...orpc.users.create.mutationOptions(),
   onSettled: () => queryCache.invalidateQueries({ key: orpc.users.key() }),
 });
 
-const updateMutation = useMutation({
+const updateMutation = useToastMutation({
   ...orpc.users.update.mutationOptions(),
   onSettled: () => queryCache.invalidateQueries({ key: orpc.users.key() }),
 });
 
-const deleteMutation = useMutation({
+const deleteMutation = useToastMutation({
   ...orpc.users.delete.mutationOptions(),
   onSettled: () => queryCache.invalidateQueries({ key: orpc.users.key() }),
 });
 
-const importCsvMutation = useMutation({
+const importCsvMutation = useToastMutation({
   ...orpc.users.importCsv.mutationOptions(),
+  onSuccess: (result: { imported: number; skipped: number; errors: string[] }) => {
+    const { imported, skipped, errors } = result;
+    if (skipped > 0 || errors.length > 0) {
+      const preview = errors.slice(0, 3).join("\n");
+      const more = errors.length > 3 ? `\n…and ${errors.length - 3} more` : "";
+      toast.warning(`Imported ${imported}, skipped ${skipped}`, {
+        description: preview + more,
+        duration: 8000,
+      });
+    } else {
+      toast.success(`Imported ${imported} user${imported === 1 ? "" : "s"}`);
+    }
+  },
   onSettled: () => queryCache.invalidateQueries({ key: orpc.users.key() }),
 });
 
@@ -61,6 +75,10 @@ function refresh() {
   queryCache.invalidateQueries({ key: orpc.users.key() });
 }
 
+function openUser(uuid: string) {
+  navigateTo(`/users/${uuid}`);
+}
+
 function onImportFileSelect(e: Event) {
   const files = (e.target as HTMLInputElement).files;
   if (files?.length) importFile.value = files[0] ?? null;
@@ -74,28 +92,39 @@ async function importUsers() {
   }
 }
 
-function downloadBarcodes() {
+// Exports users in the exact format the importer expects (the import format is
+// the source of truth), so an exported file can be re-imported as-is.
+function exportUsers() {
   if (!users.value) return;
-  const headers = ["barcode", "firstName", "lastName", "balance"];
-  let data = headers.join(",") + "\n";
-  for (const user of users.value) {
-    const line = headers.map((h) => (user as any)[h] ?? "");
-    data += line.join(",") + "\n";
+  const headers = ["firstname", "lastname", "birthdate", "group", "barcode", "amount"];
+  const lines = [headers.join(";")];
+  for (const user of users.value as any[]) {
+    const birthdate = formatDate(user.birthDate);
+    const amount = ((user.balance ?? 0) / 100).toFixed(2).replace(".", ",");
+    lines.push(
+      [
+        user.firstName ?? "",
+        user.lastName ?? "",
+        birthdate === "-" ? "" : birthdate,
+        user.group?.name ?? "",
+        user.barcode ?? "",
+        amount,
+      ].join(";"),
+    );
   }
+  const data = lines.join("\n");
   const el = document.createElement("a");
-  el.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(data));
-  el.setAttribute("download", "barcodes.csv");
+  el.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(data));
+  el.setAttribute("download", "users.csv");
   el.style.display = "none";
   document.body.appendChild(el);
   el.click();
   document.body.removeChild(el);
 }
-
-const defaultImageUrl = "/images/default-avatar.png";
 </script>
 
 <template>
-  <section class="container mx-auto p-4">
+  <section class="container mx-auto p-4 space-y-4">
     <UserForm
       v-model:active="inputForm"
       title="Add user"
@@ -107,10 +136,10 @@ const defaultImageUrl = "/images/default-avatar.png";
       @on-confirm="deleteItem"
     />
 
-    <div class="flex justify-between items-center pb-4">
+    <div class="flex justify-between items-center">
       <Button @click.stop="showForm(null)">Add user</Button>
       <div class="flex gap-2">
-        <Button variant="outline" @click="downloadBarcodes">
+        <Button variant="outline" @click="exportUsers">
           <Download class="mr-2 size-4" />
           Export
         </Button>
@@ -153,12 +182,14 @@ const defaultImageUrl = "/images/default-avatar.png";
           <TableRow v-else-if="!users?.length">
             <TableCell colspan="8" class="text-center">No users found</TableCell>
           </TableRow>
-          <TableRow v-for="user in users" :key="user.uuid">
+          <TableRow
+            v-for="user in users"
+            :key="user.uuid"
+            class="cursor-pointer"
+            @click="openUser(user.uuid)"
+          >
             <TableCell>
-              <img
-                class="w-8 h-8 rounded-full border object-cover"
-                :src="(user as any).imageUrl ?? defaultImageUrl"
-              />
+              <UserAvatar class="size-8" :src="(user as any).imageUrl" />
             </TableCell>
             <TableCell>{{ user.firstName }}</TableCell>
             <TableCell>{{ user.lastName }}</TableCell>

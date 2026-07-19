@@ -60,8 +60,6 @@ function selectShopUser(user: any) {
   comboOpen.value = false;
 }
 
-const defaultImageUrl = "/images/default-avatar.png";
-
 const userData = computed(() => [
   {
     label: "Name:",
@@ -196,10 +194,7 @@ const userData = computed(() => [
             </PopoverContent>
           </Popover>
           <div class="py-4 flex flex-row justify-center">
-            <img
-              class="h-32 aspect-square object-cover rounded-full border"
-              :src="(shop.currentUser as any)?.imageUrl ?? defaultImageUrl"
-            />
+            <UserAvatar class="size-32" :src="(shop.currentUser as any)?.imageUrl" />
           </div>
           <ul>
             <li

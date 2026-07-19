@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryCache } from "@pinia/colada";
+import { useQuery, useQueryCache } from "@pinia/colada";
 
 export const useShopStore = defineStore("shop", () => {
   const orpc = useOrpc();
@@ -20,22 +20,22 @@ export const useShopStore = defineStore("shop", () => {
   const { data: allOrders } = useQuery(orpc.orders.getAll.queryOptions());
 
   // Mutations
-  const addCartMutation = useMutation({
+  const addCartMutation = useToastMutation({
     ...orpc.cart.addItem.mutationOptions(),
     onSettled: () => queryCache.invalidateQueries({ key: orpc.cart.key() }),
   });
 
-  const updateCartMutation = useMutation({
+  const updateCartMutation = useToastMutation({
     ...orpc.cart.update.mutationOptions(),
     onSettled: () => queryCache.invalidateQueries({ key: orpc.cart.key() }),
   });
 
-  const deleteCartMutation = useMutation({
+  const deleteCartMutation = useToastMutation({
     ...orpc.cart.delete.mutationOptions(),
     onSettled: () => queryCache.invalidateQueries({ key: orpc.cart.key() }),
   });
 
-  const createOrderMutation = useMutation({
+  const createOrderMutation = useToastMutation({
     ...orpc.orders.create.mutationOptions(),
     onSettled: () => {
       queryCache.invalidateQueries({ key: orpc.cart.key() });

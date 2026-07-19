@@ -120,7 +120,7 @@ export class UserService {
   }
 
   async getAll() {
-    return this.db.select().from(tables.users);
+    return this.db.query.users.findMany({ with: { group: true } });
   }
 
   async getByUuid(uuid: string) {
@@ -187,58 +187,79 @@ export class UserService {
   async importCsv(csvContent: string) {
     const rows = parseCsv(csvContent);
     const users = [];
+    const errors: string[] = [];
+    let skipped = 0;
 
-    for (const row of rows) {
-      // Find or create group
-      let groupUuid: string | undefined;
-      if (row.group) {
-        let group = await this.db
-          .select()
-          .from(tables.groups)
-          .where(eq(tables.groups.name, row.group))
-          .get();
-
-        if (!group) {
-          [group] = await this.db
-            .insert(tables.groups)
-            .values({ name: row.group })
-            .returning();
-          if (!group) throw new Error(`Failed to create group "${row.group}"`);
+    // Each row is processed independently: a bad row is skipped and reported
+    // instead of aborting the whole import (which would leave a partial result).
+    for (const { data: row, line } of rows) {
+      try {
+        const firstName = row.firstname?.trim() ?? "";
+        const lastName = row.lastname?.trim() ?? "";
+        if (!firstName || !lastName) {
+          skipped++;
+          errors.push(`Line ${line}: missing first or last name`);
+          continue;
         }
-        groupUuid = group.uuid;
-      }
 
-      const barcode = row.barcode || undefined;
-      const generateBarcode = !barcode;
+        // Find or create group
+        let groupUuid: string | undefined;
+        if (row.group) {
+          let group = await this.db
+            .select()
+            .from(tables.groups)
+            .where(eq(tables.groups.name, row.group))
+            .get();
 
-      const user = await this.create({
-        firstName: row.firstname,
-        lastName: row.lastname,
-        birthDate: row.birthdate ? parseGermanDate(row.birthdate) : undefined,
-        groupUuid,
-        barcode,
-        generateBarcode,
-      });
-      users.push(user);
-
-      // Optionally add initial balance
-      if (row.amount) {
-        const amountCents = Math.round(parseFloat(row.amount) * 100);
-        if (amountCents > 0) {
-          this.db.transaction((tx) => {
-            tx.update(tables.users)
-              .set({ balance: sql`${tables.users.balance} + ${amountCents}` })
-              .where(eq(tables.users.uuid, user.uuid))
-              .run();
-            tx.insert(tables.transactions)
-              .values({ userUuid: user.uuid, amount: amountCents })
-              .run();
-          });
+          if (!group) {
+            [group] = await this.db
+              .insert(tables.groups)
+              .values({ name: row.group })
+              .returning();
+            if (!group) throw new Error(`Failed to create group "${row.group}"`);
+          }
+          groupUuid = group.uuid;
         }
+
+        const barcode = row.barcode || undefined;
+        const generateBarcode = !barcode;
+
+        const user = await this.create({
+          firstName,
+          lastName,
+          birthDate: row.birthdate ? parseGermanDate(row.birthdate) : undefined,
+          groupUuid,
+          barcode,
+          generateBarcode,
+        });
+        users.push(user);
+
+        // Optionally add initial balance
+        if (row.amount) {
+          const amountCents = parseAmountToCents(row.amount);
+          if (amountCents === null) {
+            // User is still imported; just flag the unparseable amount.
+            errors.push(`Line ${line}: could not parse amount "${row.amount}"`);
+          } else if (amountCents > 0) {
+            this.db.transaction((tx) => {
+              tx.update(tables.users)
+                .set({ balance: sql`${tables.users.balance} + ${amountCents}` })
+                .where(eq(tables.users.uuid, user.uuid))
+                .run();
+              tx.insert(tables.transactions)
+                .values({ userUuid: user.uuid, amount: amountCents })
+                .run();
+            });
+          }
+        }
+      } catch (err) {
+        skipped++;
+        const message = err instanceof Error ? err.message : String(err);
+        errors.push(`Line ${line}: ${message}`);
       }
     }
 
-    return { imported: users.length, skipped: 0, users };
+    return { imported: users.length, skipped, errors, users };
   }
 
   private async getByUuidWithRelations(uuid: string) {
@@ -274,6 +295,36 @@ export class UserService {
 }
 
 /**
+ * Parse a monetary amount string into integer cents.
+ *
+ * Handles both German ("12,50", "1.234,56") and English ("12.50", "1,234.56")
+ * number formats, plus surrounding whitespace/currency symbols. The right-most
+ * "," or "." is treated as the decimal separator; any other separators are
+ * thousands groupings and are stripped. Returns null for non-numeric input.
+ *
+ * The previous `parseFloat` approach silently dropped the fractional part of
+ * German-formatted amounts (e.g. "12,50" -> 12 -> €12.00 instead of €12.50).
+ */
+function parseAmountToCents(raw: string): number | null {
+  const cleaned = raw.trim().replace(/[^\d.,-]/g, "");
+  if (!cleaned || !/\d/.test(cleaned)) return null;
+
+  const decimalPos = Math.max(cleaned.lastIndexOf(","), cleaned.lastIndexOf("."));
+  let normalized: string;
+  if (decimalPos === -1) {
+    normalized = cleaned;
+  } else {
+    const intPart = cleaned.slice(0, decimalPos).replace(/[.,]/g, "");
+    const fracPart = cleaned.slice(decimalPos + 1).replace(/[.,]/g, "");
+    normalized = `${intPart}.${fracPart}`;
+  }
+
+  const value = Number(normalized);
+  if (!Number.isFinite(value)) return null;
+  return Math.round(value * 100);
+}
+
+/**
  * Parse German date "dd.mm.yy" to ISO string, or return as-is for other formats.
  */
 function parseGermanDate(dateStr: string): string {
@@ -290,22 +341,28 @@ function parseGermanDate(dateStr: string): string {
 }
 
 /**
- * Parse a semicolon-delimited CSV string into rows.
+ * Parse a semicolon-delimited CSV string into rows, keeping each row's 1-based
+ * source line number for error reporting. A leading UTF-8 BOM (added by Excel
+ * and similar tools) is stripped so the first header still matches.
  * Expected columns: firstname, lastname, birthdate, group?, barcode?, amount?
  */
-function parseCsv(content: string): CsvRow[] {
-  const lines = content.trim().split(/\r?\n/);
+function parseCsv(content: string): Array<{ data: CsvRow; line: number }> {
+  const lines = content.replace(/^\uFEFF/, "").split(/\r?\n/);
   const headerLine = lines[0];
-  if (!headerLine || lines.length < 2) return [];
+  if (!headerLine) return [];
 
   const headers = headerLine.split(";").map((h) => h.trim().toLowerCase());
 
-  return lines.slice(1).filter(Boolean).map((line) => {
+  const rows: Array<{ data: CsvRow; line: number }> = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line || !line.trim()) continue;
     const values = line.split(";");
     const row: Record<string, string> = {};
-    headers.forEach((header, i) => {
-      row[header] = values[i]?.trim() ?? "";
+    headers.forEach((header, j) => {
+      row[header] = values[j]?.trim() ?? "";
     });
-    return row as unknown as CsvRow;
-  });
+    rows.push({ data: row as unknown as CsvRow, line: i + 1 });
+  }
+  return rows;
 }
