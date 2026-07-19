@@ -30,10 +30,12 @@ const orpc = useOrpc();
 
 const { data: groups } = useQuery(orpc.groups.getAll.queryOptions({ enabled: active }));
 
+// Error messages are translation keys, resolved via $t at display time so
+// they follow locale switches.
 const userSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required"),
-  lastName: z.string().trim().min(1, "Last name is required"),
-  birthDate: z.string().min(1, "Date of birth is required"),
+  firstName: z.string().trim().min(1, "validation.firstNameRequired"),
+  lastName: z.string().trim().min(1, "validation.lastNameRequired"),
+  birthDate: z.string().min(1, "validation.birthDateRequired"),
 });
 
 type FieldErrors = Partial<Record<keyof z.infer<typeof userSchema>, string>>;
@@ -155,28 +157,28 @@ function onConfirm() {
             />
             <Button variant="outline" @click="fileInput?.click()">
               <ImagePlus class="mr-2 size-4" />
-              Select image
+              {{ $t("users.selectImage") }}
             </Button>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="grid gap-2">
-            <Label for="user-first-name">First Name</Label>
-            <Input id="user-first-name" v-model="user.firstName" placeholder="First Name" />
+            <Label for="user-first-name">{{ $t("users.firstName") }}</Label>
+            <Input id="user-first-name" v-model="user.firstName" :placeholder="$t('users.firstName')" />
             <p v-if="errors.firstName" class="text-sm text-destructive">
-              {{ errors.firstName }}
+              {{ $t(errors.firstName) }}
             </p>
           </div>
           <div class="grid gap-2">
-            <Label for="user-last-name">Last Name</Label>
-            <Input id="user-last-name" v-model="user.lastName" placeholder="Last Name" />
+            <Label for="user-last-name">{{ $t("users.lastName") }}</Label>
+            <Input id="user-last-name" v-model="user.lastName" :placeholder="$t('users.lastName')" />
             <p v-if="errors.lastName" class="text-sm text-destructive">
-              {{ errors.lastName }}
+              {{ $t(errors.lastName) }}
             </p>
           </div>
         </div>
         <div class="grid gap-2">
-          <Label for="user-birthdate">Date of Birth</Label>
+          <Label for="user-birthdate">{{ $t("users.dateOfBirth") }}</Label>
           <Input
             id="user-birthdate"
             :model-value="user.birthDate ?? ''"
@@ -184,7 +186,7 @@ function onConfirm() {
             @update:model-value="user.birthDate = ($event as string) || null"
           />
           <p v-if="errors.birthDate" class="text-sm text-destructive">
-            {{ errors.birthDate }}
+            {{ $t(errors.birthDate) }}
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -193,16 +195,16 @@ function onConfirm() {
             :disabled="!!user.barcode"
             @update:checked="user.generateBarcode = $event"
           />
-          <Label>{{ user.barcode ? "User already has a barcode" : "Generate barcode" }}</Label>
+          <Label>{{ user.barcode ? $t("users.hasBarcode") : $t("users.generateBarcode") }}</Label>
         </div>
         <div class="grid gap-2">
-          <Label>Group</Label>
+          <Label>{{ $t("common.group") }}</Label>
           <Select v-model="selectedGroup">
             <SelectTrigger>
-              <SelectValue placeholder="Select a group" />
+              <SelectValue :placeholder="$t('users.selectGroup')" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem :value="NO_GROUP">No group</SelectItem>
+              <SelectItem :value="NO_GROUP">{{ $t("users.noGroup") }}</SelectItem>
               <SelectItem v-for="g in groups" :key="g.uuid" :value="g.uuid">
                 {{ g.name }}
               </SelectItem>
@@ -211,8 +213,8 @@ function onConfirm() {
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" @click="onCancel()">{{ cancelText ?? "Cancel" }}</Button>
-        <Button @click="onConfirm()">{{ confirmText ?? "Save" }}</Button>
+        <Button variant="outline" @click="onCancel()">{{ cancelText ?? $t("common.cancel") }}</Button>
+        <Button @click="onConfirm()">{{ confirmText ?? $t("common.save") }}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

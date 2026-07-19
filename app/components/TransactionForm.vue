@@ -2,10 +2,12 @@
 import { useQuery } from "@pinia/colada";
 import { Search, ArrowDownToLine, ArrowUpFromLine, Check, ChevronsUpDown } from "lucide-vue-next";
 
-defineProps<{
+const props = defineProps<{
   title: string;
   confirmText?: string;
   cancelText?: string;
+  /** When set, the form is scoped to this user and the picker is hidden. */
+  user?: { uuid: string; firstName: string; lastName: string; group?: { name: string } | null } | null;
 }>();
 
 const active = defineModel<boolean>("active", { default: false });
@@ -15,7 +17,11 @@ const emit = defineEmits<{
 }>();
 
 const orpc = useOrpc();
-const { data: users } = useQuery(orpc.users.getAll.queryOptions({ enabled: active }));
+// The user list is only needed when the form has to offer a picker.
+const needsPicker = computed(() => active.value && !props.user);
+const { data: users } = useQuery(
+  orpc.users.getAll.queryOptions({ enabled: needsPicker }),
+);
 
 const transactionType = ref<"deposit" | "withdraw">("deposit");
 const searchString = ref("");
@@ -42,7 +48,7 @@ watch(active, (val) => {
   if (val) {
     transactionType.value = "deposit";
     searchString.value = "";
-    selectedUser.value = null;
+    selectedUser.value = props.user ?? null;
     amount.value = 0;
   }
 });
@@ -76,19 +82,23 @@ function onConfirm() {
         <DialogTitle>{{ title }}</DialogTitle>
       </DialogHeader>
       <div class="grid gap-4 py-4">
-        <div class="grid gap-2">
-          <Label>User</Label>
+        <div v-if="user" class="grid gap-2">
+          <Label>{{ $t("common.user") }}</Label>
+          <p class="text-sm font-medium">{{ userLabel(user) }}</p>
+        </div>
+        <div v-else class="grid gap-2">
+          <Label>{{ $t("common.user") }}</Label>
           <Popover v-model:open="comboOpen">
             <PopoverTrigger as-child>
               <Button variant="outline" role="combobox" class="justify-between w-full">
-                <span class="truncate">{{ selectedUser ? userLabel(selectedUser) : "Select a user..." }}</span>
+                <span class="truncate">{{ selectedUser ? userLabel(selectedUser) : $t("shop.selectUser") }}</span>
                 <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent class="w-full p-0" align="start">
               <Command>
-                <CommandInput v-model="searchString" placeholder="Search user..." />
-                <CommandEmpty>No users found.</CommandEmpty>
+                <CommandInput v-model="searchString" :placeholder="$t('shop.searchUser')" />
+                <CommandEmpty>{{ $t("shop.noUsersFound") }}</CommandEmpty>
                 <CommandList>
                   <CommandGroup>
                     <CommandItem
@@ -107,28 +117,30 @@ function onConfirm() {
           </Popover>
         </div>
         <div class="grid gap-2">
-          <Label>Type</Label>
+          <Label>{{ $t("common.type") }}</Label>
           <Tabs v-model="transactionType" class="w-full">
             <TabsList class="grid w-full grid-cols-2">
               <TabsTrigger value="deposit" class="flex items-center gap-1">
                 <ArrowDownToLine class="size-4" />
-                Deposit
+                {{ $t("transactions.deposit") }}
               </TabsTrigger>
               <TabsTrigger value="withdraw" class="flex items-center gap-1">
                 <ArrowUpFromLine class="size-4" />
-                Withdraw
+                {{ $t("transactions.withdraw") }}
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
         <div class="grid gap-2">
-          <Label>Amount</Label>
+          <Label>{{ $t("common.amount") }}</Label>
           <CurrencyInput v-model="amount" />
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" @click="onCancel()">{{ cancelText ?? "Cancel" }}</Button>
-        <Button @click="onConfirm()">{{ confirmText ?? "Save" }}</Button>
+        <Button variant="outline" @click="onCancel()">{{ cancelText ?? $t("common.cancel") }}</Button>
+        <Button :disabled="!selectedUser || amount <= 0" @click="onConfirm()">
+          {{ confirmText ?? $t("common.save") }}
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

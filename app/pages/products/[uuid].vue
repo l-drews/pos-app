@@ -52,15 +52,15 @@ const dailySales = computed<DailySales[]>(() => {
     <div class="flex items-center justify-between">
       <Button variant="ghost" size="sm" @click="navigateTo('/products')">
         <ArrowLeft class="mr-2 size-4" />
-        Back
+        {{ $t("common.back") }}
       </Button>
     </div>
 
     <div v-if="isLoading" class="py-12 text-center text-muted-foreground">
-      Loading...
+      {{ $t("common.loading") }}
     </div>
     <div v-else-if="!product" class="py-12 text-center text-muted-foreground">
-      Product not found
+      {{ $t("products.notFound") }}
     </div>
 
     <template v-else>
@@ -73,39 +73,40 @@ const dailySales = computed<DailySales[]>(() => {
         <div>
           <h1 class="text-2xl font-semibold">{{ product.name }}</h1>
           <p class="text-sm text-muted-foreground">
-            {{ formatCents(product.price) }} · Barcode: {{ product.barcode ?? "—" }}
+            {{ formatCents(product.price) }} · {{ $t("common.barcode") }}:
+            {{ product.barcode ?? "—" }}
           </p>
         </div>
       </div>
 
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Units sold</p>
+          <p class="text-sm text-muted-foreground">{{ $t("products.unitsSold") }}</p>
           <p class="text-2xl font-bold">{{ stats.unitsSold }}</p>
         </div>
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Orders</p>
+          <p class="text-sm text-muted-foreground">{{ $t("common.orders") }}</p>
           <p class="text-2xl font-bold">{{ stats.orders }}</p>
         </div>
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Total revenue</p>
+          <p class="text-sm text-muted-foreground">{{ $t("summary.totalRevenue") }}</p>
           <p class="text-2xl font-bold">{{ formatCents(stats.revenue) }}</p>
         </div>
       </div>
 
       <div class="rounded-lg border bg-card p-4">
-        <h2 class="pb-3 text-lg font-medium">Sales by day</h2>
+        <h2 class="pb-3 text-lg font-medium">{{ $t("products.salesByDay") }}</h2>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead class="text-right">Units</TableHead>
-              <TableHead class="text-right">Revenue</TableHead>
+              <TableHead>{{ $t("common.date") }}</TableHead>
+              <TableHead class="text-right">{{ $t("products.units") }}</TableHead>
+              <TableHead class="text-right">{{ $t("products.revenue") }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow v-if="!dailySales.length">
-              <TableCell colspan="3" class="text-center">No sales yet</TableCell>
+              <TableCell colspan="3" class="text-center">{{ $t("products.noSales") }}</TableCell>
             </TableRow>
             <TableRow
               v-for="day in dailySales"

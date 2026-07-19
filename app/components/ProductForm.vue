@@ -54,21 +54,21 @@ function onConfirm() {
       </DialogHeader>
       <div class="grid gap-4 py-4">
         <div class="grid gap-2">
-          <Label for="product-name">Name</Label>
-          <Input id="product-name" v-model="product.name" placeholder="Name" />
+          <Label for="product-name">{{ $t("common.name") }}</Label>
+          <Input id="product-name" v-model="product.name" :placeholder="$t('common.name')" />
         </div>
         <div class="grid gap-2">
-          <Label for="product-barcode">Barcode</Label>
-          <Input id="product-barcode" v-model="product.barcode" placeholder="Barcode" />
+          <Label for="product-barcode">{{ $t("common.barcode") }}</Label>
+          <Input id="product-barcode" v-model="product.barcode" :placeholder="$t('common.barcode')" />
         </div>
         <div class="grid gap-2">
-          <Label for="product-price">Price</Label>
+          <Label for="product-price">{{ $t("common.price") }}</Label>
           <CurrencyInput v-model="product.price" />
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" @click="onCancel()">{{ cancelText ?? "Cancel" }}</Button>
-        <Button @click="onConfirm()">{{ confirmText ?? "Save" }}</Button>
+        <Button variant="outline" @click="onCancel()">{{ cancelText ?? $t("common.cancel") }}</Button>
+        <Button @click="onConfirm()">{{ confirmText ?? $t("common.save") }}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

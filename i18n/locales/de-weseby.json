@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "users": "LaKis",
+    "groups": "Zelte"
+  },
+  "common": {
+    "user": "LaKi",
+    "group": "Zelt"
+  },
+  "shop": {
+    "selectUser": "LaKi auswählen...",
+    "searchUser": "LaKi suchen...",
+    "noUsersFound": "Keine LaKis gefunden."
+  },
+  "users": {
+    "add": "LaKi hinzufügen",
+    "editTitle": "LaKi bearbeiten",
+    "search": "LaKis suchen...",
+    "none": "Keine LaKis gefunden",
+    "noMatch": "Keine LaKis entsprechen der Suche",
+    "imported": "{n} LaKi importiert | {n} LaKis importiert",
+    "notFound": "LaKi nicht gefunden",
+    "hasBarcode": "LaKi hat bereits einen Barcode",
+    "selectGroup": "Zelt auswählen",
+    "noGroup": "Kein Zelt",
+    "deleteTitle": "LaKi löschen"
+  },
+  "groups": {
+    "add": "Zelt hinzufügen",
+    "edit": "Zelt bearbeiten",
+    "name": "Zeltname",
+    "placeholder": "Zeltname",
+    "none": "Keine Zelte gefunden"
+  },
+  "summary": {
+    "topCustomers": "Top-LaKis",
+    "noCustomers": "Keine LaKis"
+  }
+}

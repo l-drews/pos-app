@@ -17,13 +17,13 @@ const { version, gitSha, buildTime } = useRuntimeConfig().public;
 const buildInfo = `v${version} (${gitSha}) · built ${formatDateTime(buildTime)}`;
 
 const items = [
-  { title: "Shop", icon: Store, path: "/shop" },
-  { title: "Products", icon: Tag, path: "/products" },
-  { title: "Users", icon: User, path: "/users" },
-  { title: "Groups", icon: Users, path: "/groups" },
-  { title: "Orders", icon: ShoppingCart, path: "/orders" },
-  { title: "Transactions", icon: CreditCard, path: "/transactions" },
-  { title: "Summary", icon: BarChart3, path: "/summary" },
+  { key: "nav.shop", icon: Store, path: "/shop" },
+  { key: "nav.products", icon: Tag, path: "/products" },
+  { key: "nav.users", icon: User, path: "/users" },
+  { key: "nav.groups", icon: Users, path: "/groups" },
+  { key: "nav.orders", icon: ShoppingCart, path: "/orders" },
+  { key: "nav.transactions", icon: CreditCard, path: "/transactions" },
+  { key: "nav.summary", icon: BarChart3, path: "/summary" },
 ];
 </script>
 
@@ -42,13 +42,14 @@ const items = [
     <nav class="px-2 flex flex-col border-t border-sidebar-border flex-1">
       <NavigationItem
         v-for="item in items"
-        :key="item.title"
+        :key="item.key"
         :reduce="reduce"
-        :title="item.title"
+        :title="$t(item.key)"
         :icon="item.icon"
         :path="item.path"
       />
     </nav>
+    <LocaleSwitcher class="pb-2" />
     <div
       class="border-t border-sidebar-border px-2 py-2 text-center text-xs text-muted-foreground truncate"
       :title="buildInfo"

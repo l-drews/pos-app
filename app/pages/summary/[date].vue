@@ -113,50 +113,50 @@ function openProduct(product: TopProduct) {
     <div class="flex items-center justify-between">
       <Button variant="ghost" size="sm" @click="navigateTo('/summary')">
         <ArrowLeft class="mr-2 size-4" />
-        Back
+        {{ $t("common.back") }}
       </Button>
       <h1 class="text-xl font-semibold">
-        {{ day ? formatDate(day) : "Unknown day" }}
+        {{ day ? formatDate(day) : $t("summary.unknownDay") }}
       </h1>
     </div>
 
     <div v-if="!day" class="py-12 text-center text-muted-foreground">
-      Invalid date
+      {{ $t("summary.invalidDate") }}
     </div>
     <div v-else-if="isLoading" class="py-12 text-center text-muted-foreground">
-      Loading...
+      {{ $t("common.loading") }}
     </div>
 
     <template v-else>
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Orders</p>
+          <p class="text-sm text-muted-foreground">{{ $t("common.orders") }}</p>
           <p class="text-2xl font-bold">{{ stats.orderCount }}</p>
         </div>
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Average order</p>
+          <p class="text-sm text-muted-foreground">{{ $t("summary.averageOrder") }}</p>
           <p class="text-2xl font-bold">{{ formatCents(stats.average) }}</p>
         </div>
         <div class="rounded-lg border bg-card p-4">
-          <p class="text-sm text-muted-foreground">Total revenue</p>
+          <p class="text-sm text-muted-foreground">{{ $t("summary.totalRevenue") }}</p>
           <p class="text-2xl font-bold">{{ formatCents(stats.total) }}</p>
         </div>
       </div>
 
       <div class="grid gap-4 lg:grid-cols-2">
         <div class="rounded-lg border bg-card p-4">
-          <h2 class="pb-3 text-lg font-medium">Top products</h2>
+          <h2 class="pb-3 text-lg font-medium">{{ $t("summary.topProducts") }}</h2>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead class="text-right">Qty</TableHead>
-                <TableHead class="text-right">Revenue</TableHead>
+                <TableHead>{{ $t("orders.product") }}</TableHead>
+                <TableHead class="text-right">{{ $t("orders.qty") }}</TableHead>
+                <TableHead class="text-right">{{ $t("products.revenue") }}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow v-if="!topProducts.length">
-                <TableCell colspan="3" class="text-center">No sales</TableCell>
+                <TableCell colspan="3" class="text-center">{{ $t("summary.noSales") }}</TableCell>
               </TableRow>
               <TableRow
                 v-for="product in topProducts"
@@ -173,18 +173,18 @@ function openProduct(product: TopProduct) {
         </div>
 
         <div class="rounded-lg border bg-card p-4">
-          <h2 class="pb-3 text-lg font-medium">Top customers</h2>
+          <h2 class="pb-3 text-lg font-medium">{{ $t("summary.topCustomers") }}</h2>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead class="text-right">Orders</TableHead>
-                <TableHead class="text-right">Spent</TableHead>
+                <TableHead>{{ $t("common.user") }}</TableHead>
+                <TableHead class="text-right">{{ $t("common.orders") }}</TableHead>
+                <TableHead class="text-right">{{ $t("summary.spent") }}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow v-if="!topUsers.length">
-                <TableCell colspan="3" class="text-center">No customers</TableCell>
+                <TableCell colspan="3" class="text-center">{{ $t("summary.noCustomers") }}</TableCell>
               </TableRow>
               <TableRow
                 v-for="user in topUsers"
@@ -202,19 +202,19 @@ function openProduct(product: TopProduct) {
       </div>
 
       <div class="rounded-lg border bg-card p-4">
-        <h2 class="pb-3 text-lg font-medium">Orders</h2>
+        <h2 class="pb-3 text-lg font-medium">{{ $t("common.orders") }}</h2>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Time</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead class="text-right">Items</TableHead>
-              <TableHead class="text-right">Amount</TableHead>
+              <TableHead>{{ $t("common.time") }}</TableHead>
+              <TableHead>{{ $t("common.user") }}</TableHead>
+              <TableHead class="text-right">{{ $t("common.items") }}</TableHead>
+              <TableHead class="text-right">{{ $t("common.amount") }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow v-if="!(orders as any[])?.length">
-              <TableCell colspan="4" class="text-center">No orders on this day</TableCell>
+              <TableCell colspan="4" class="text-center">{{ $t("orders.noOrdersDay") }}</TableCell>
             </TableRow>
             <TableRow
               v-for="order in orders as any[]"

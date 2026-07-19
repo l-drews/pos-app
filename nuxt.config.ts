@@ -41,7 +41,27 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "shadcn-nuxt",
     "@nuxt/test-utils/module",
+    "@nuxtjs/i18n",
   ],
+
+  i18n: {
+    // no_prefix: locale is pure UI state — URL-prefixed locales would break
+    // the Electron app:// SPA fallback and hardcoded navigateTo() paths.
+    strategy: "no_prefix",
+    defaultLocale: "en",
+    locales: [
+      { code: "en", name: "English", file: "en.json" },
+      { code: "de", name: "Deutsch", file: "de.json" },
+      // Weseby Edition: German with the summer camp's terminology (groups are
+      // "Zelte", users are "LaKis"). Its file only holds the overrides —
+      // later files win, everything else merges from de.json.
+      { code: "de-weseby", name: "Weseby Edition", files: ["de.json", "de-weseby.json"] },
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: "pos-locale",
+    },
+  },
 
   css: ["~/assets/css/tailwind.css", "vue-sonner/style.css"],
 

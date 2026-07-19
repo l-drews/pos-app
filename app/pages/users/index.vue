@@ -5,6 +5,7 @@ import { toast } from "vue-sonner";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
+const { t } = useI18n();
 
 const { data: users, isLoading } = useQuery(orpc.users.getAll.queryOptions());
 
@@ -29,13 +30,14 @@ const importCsvMutation = useToastMutation({
     const { imported, skipped, errors } = result;
     if (skipped > 0 || errors.length > 0) {
       const preview = errors.slice(0, 3).join("\n");
-      const more = errors.length > 3 ? `\n…and ${errors.length - 3} more` : "";
-      toast.warning(`Imported ${imported}, skipped ${skipped}`, {
+      const more =
+        errors.length > 3 ? `\n${t("users.andMore", { n: errors.length - 3 })}` : "";
+      toast.warning(t("users.importedSkipped", { imported, skipped }), {
         description: preview + more,
         duration: 8000,
       });
     } else {
-      toast.success(`Imported ${imported} user${imported === 1 ? "" : "s"}`);
+      toast.success(t("users.imported", { n: imported }, imported));
     }
   },
   onSettled: () => queryCache.invalidateQueries({ key: orpc.users.key() }),
@@ -172,7 +174,7 @@ function exportUsers() {
   <section class="container mx-auto p-4 space-y-4">
     <UserForm
       v-model:active="inputForm"
-      title="Add user"
+      :title="selected ? $t('users.editTitle') : $t('users.add')"
       :selected="selected"
       @on-confirm="addOrUpdateItem"
     />
@@ -183,18 +185,18 @@ function exportUsers() {
 
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-2">
-        <Button @click.stop="showForm(null)">Add user</Button>
+        <Button @click.stop="showForm(null)">{{ $t("users.add") }}</Button>
         <div class="relative">
           <Search
             class="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
           />
-          <Input v-model="search" placeholder="Search users..." class="w-64 pl-8" />
+          <Input v-model="search" :placeholder="$t('users.search')" class="w-64 pl-8" />
         </div>
       </div>
       <div class="flex gap-2">
         <Button variant="outline" @click="exportUsers">
           <Download class="mr-2 size-4" />
-          Export
+          {{ $t("common.export") }}
         </Button>
         <input
           ref="fileInput"
@@ -205,9 +207,9 @@ function exportUsers() {
         />
         <Button variant="outline" @click="fileInput?.click()">
           <Upload class="mr-2 size-4" />
-          {{ importFile?.name || "Import" }}
+          {{ importFile?.name || $t("common.import") }}
         </Button>
-        <Button v-if="importFile" @click="importUsers">Apply</Button>
+        <Button v-if="importFile" @click="importUsers">{{ $t("common.apply") }}</Button>
         <Button variant="outline" size="icon" @click="refresh()">
           <RefreshCw class="size-4" />
         </Button>
@@ -220,33 +222,33 @@ function exportUsers() {
           <TableRow>
             <TableHead class="w-14" />
             <SortableHead column="firstName" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              First Name
+              {{ $t("users.firstName") }}
             </SortableHead>
             <SortableHead column="lastName" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Last Name
+              {{ $t("users.lastName") }}
             </SortableHead>
             <SortableHead column="group" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Group
+              {{ $t("common.group") }}
             </SortableHead>
             <SortableHead column="birthDate" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Date of Birth
+              {{ $t("users.dateOfBirth") }}
             </SortableHead>
             <SortableHead column="balance" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Balance
+              {{ $t("common.balance") }}
             </SortableHead>
             <SortableHead column="barcode" :sort-by="sortBy" :sort-dir="sortDir" @sort="toggleSort">
-              Barcode
+              {{ $t("common.barcode") }}
             </SortableHead>
-            <TableHead class="w-20 text-right">Actions</TableHead>
+            <TableHead class="w-20 text-right">{{ $t("common.actions") }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading">
-            <TableCell colspan="8" class="text-center">Loading...</TableCell>
+            <TableCell colspan="8" class="text-center">{{ $t("common.loading") }}</TableCell>
           </TableRow>
           <TableRow v-else-if="!visibleUsers.length">
             <TableCell colspan="8" class="text-center">
-              {{ search ? "No users match your search" : "No users found" }}
+              {{ search ? $t("users.noMatch") : $t("users.none") }}
             </TableCell>
           </TableRow>
           <TableRow

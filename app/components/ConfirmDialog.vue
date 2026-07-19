@@ -26,17 +26,17 @@ function onCancel() {
   <AlertDialog :open="active" @update:open="active = $event">
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>{{ title ?? "Confirm" }}</AlertDialogTitle>
+        <AlertDialogTitle>{{ title ?? $t("common.confirm") }}</AlertDialogTitle>
         <AlertDialogDescription>
-          {{ body ?? "Are you sure?" }}
+          {{ body ?? $t("common.areYouSure") }}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel @click="onCancel()">
-          {{ buttons?.[0] ?? "Cancel" }}
+          {{ buttons?.[0] ?? $t("common.cancel") }}
         </AlertDialogCancel>
         <AlertDialogAction @click="onConfirm()">
-          {{ buttons?.[1] ?? "Confirm" }}
+          {{ buttons?.[1] ?? $t("common.confirm") }}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

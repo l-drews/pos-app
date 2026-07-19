@@ -24,13 +24,13 @@ watch(
 
 <template>
   <div class="flex items-center justify-between pt-4 text-sm text-muted-foreground">
-    <span>{{ from }}–{{ to }} of {{ total }}</span>
+    <span>{{ $t("common.range", { from, to, total }) }}</span>
     <div class="flex gap-2">
       <Button variant="outline" size="sm" :disabled="!canPrev" @click="page--">
-        Previous
+        {{ $t("common.previous") }}
       </Button>
       <Button variant="outline" size="sm" :disabled="!canNext" @click="page++">
-        Next
+        {{ $t("common.next") }}
       </Button>
     </div>
   </div>

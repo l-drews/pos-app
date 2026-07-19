@@ -44,7 +44,7 @@ function refresh() {
 <template>
   <section class="container mx-auto p-4">
     <div class="flex justify-between items-center pb-4">
-      <h1 class="text-xl font-semibold">Daily summary</h1>
+      <h1 class="text-xl font-semibold">{{ $t("summary.title") }}</h1>
       <Button variant="outline" size="icon" @click="refresh()">
         <RefreshCw class="size-4" />
       </Button>
@@ -54,18 +54,18 @@ function refresh() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Orders</TableHead>
-            <TableHead>Average order</TableHead>
-            <TableHead>Total revenue</TableHead>
+            <TableHead>{{ $t("common.date") }}</TableHead>
+            <TableHead>{{ $t("common.orders") }}</TableHead>
+            <TableHead>{{ $t("summary.averageOrder") }}</TableHead>
+            <TableHead>{{ $t("summary.totalRevenue") }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading">
-            <TableCell colspan="4" class="text-center">Loading...</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("common.loading") }}</TableCell>
           </TableRow>
           <TableRow v-else-if="!dailySummaries.length">
-            <TableCell colspan="4" class="text-center">No orders found</TableCell>
+            <TableCell colspan="4" class="text-center">{{ $t("orders.none") }}</TableCell>
           </TableRow>
           <TableRow
             v-for="day in dailySummaries"
