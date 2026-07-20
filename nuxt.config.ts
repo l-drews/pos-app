@@ -13,9 +13,13 @@ function git(command: string): string {
 }
 
 // Captured once when the build (or dev server) starts. A "-dirty" suffix
-// marks builds made from uncommitted changes.
+// marks builds made from uncommitted changes. Release CI injects the tag
+// version into package.json without committing — that intentional mutation
+// must not stamp the build as dirty, so it sets IGNORE_GIT_DIRTY.
 const gitSha = git("git rev-parse --short HEAD") || "unknown";
-const gitDirty = git("git status --porcelain") !== "";
+const gitDirty = process.env.IGNORE_GIT_DIRTY
+  ? false
+  : git("git status --porcelain") !== "";
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
