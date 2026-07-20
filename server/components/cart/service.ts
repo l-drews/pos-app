@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { type Db, tables } from "~~/server/utils/drizzle";
 import { NotFoundError, ValidationError } from "~~/server/utils/errors";
 
@@ -8,17 +8,28 @@ export class CartService {
   async addItem(input: { productUuid?: string; barcode?: string }) {
     let product;
 
+    // Soft-deleted products cannot be added to the cart.
     if (input.productUuid) {
       product = await this.db
         .select()
         .from(tables.products)
-        .where(eq(tables.products.uuid, input.productUuid))
+        .where(
+          and(
+            eq(tables.products.uuid, input.productUuid),
+            isNull(tables.products.deletedAt),
+          ),
+        )
         .get();
     } else if (input.barcode) {
       product = await this.db
         .select()
         .from(tables.products)
-        .where(eq(tables.products.barcode, input.barcode))
+        .where(
+          and(
+            eq(tables.products.barcode, input.barcode),
+            isNull(tables.products.deletedAt),
+          ),
+        )
         .get();
     } else {
       throw new ValidationError("Either productUuid or barcode is required");
