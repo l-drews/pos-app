@@ -1,6 +1,10 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const products = sqliteTable("products", {
+  // Products that have been sold are soft-deleted (deletedAt set) so order
+  // history and statistics keep their product rows; never-sold products are
+  // hard-deleted.
+  deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   uuid: text("uuid")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),

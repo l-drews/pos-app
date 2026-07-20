@@ -20,9 +20,17 @@ export const productRouter = base.router({
       return await makeService(db).create(input);
     }),
 
-  getAll: base.handler(async ({ context: { db } }) => {
-    return await makeService(db).getAll();
-  }),
+  getAll: base
+    .input(z.object({ includeDeleted: z.boolean().default(false) }).optional())
+    .handler(async ({ context: { db }, input }) => {
+      return await makeService(db).getAll(input?.includeDeleted ?? false);
+    }),
+
+  restore: base
+    .input(z.object({ uuid: z.uuid() }))
+    .handler(async ({ context: { db }, input }) => {
+      return await makeService(db).restore(input.uuid);
+    }),
 
   getByUuid: base
     .input(z.object({ uuid: z.uuid() }))

@@ -15,6 +15,13 @@
       "when": 1784479204896,
       "tag": "0001_dark_johnny_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784571301436,
+      "tag": "0002_complex_namor",
+      "breakpoints": true
     }
   ]
 }
