@@ -12,12 +12,14 @@ const { mockShop } = vi.hoisted(() => {
     searchString: "",
     cartItems: [] as unknown[],
     allUsers: [] as unknown[],
+    allProducts: [] as unknown[],
     currentUser: null as { uuid: string; barcode: string | null } | null,
     filteredUsers: [] as unknown[],
     paymentTotal: 0,
     todaysOrderTotal: 0,
     disablePayment: true,
     addCartItem: vi.fn(),
+    addCartItemByUuid: vi.fn(),
     incrementCount: vi.fn(),
     decrementCount: vi.fn(),
     deleteItem: vi.fn(),
@@ -55,6 +57,7 @@ describe("shop page scanner handling", () => {
       searchString: "",
       cartItems: [],
       allUsers: [],
+      allProducts: [],
       currentUser: null,
       filteredUsers: [],
       paymentTotal: 0,
@@ -171,6 +174,36 @@ describe("shop page scanner handling", () => {
     expect(mockShop.addCartItem).toHaveBeenCalledWith("4006381");
     expect(mockShop.createOrder).not.toHaveBeenCalled();
     button.remove();
+  });
+
+  it("adds a product via the search combobox without a scanner", async () => {
+    // The mock store is not reactive, so set the products before mounting.
+    mockShop.allProducts = [
+      { uuid: "p1", name: "Cola", price: 150, barcode: "4006381" },
+      { uuid: "p2", name: "Fanta", price: 200, barcode: null },
+    ];
+    wrapper.unmount();
+    wrapper = await mountSuspended(ShopPage);
+
+    await wrapper
+      .findAll("button")
+      .find((b) => b.text().includes("Add product"))!
+      .trigger("click");
+
+    await vi.waitFor(() =>
+      expect(document.body.textContent).toContain("Cola"),
+    );
+    const option = [...document.querySelectorAll('[role="option"]')].find(
+      (el) => el.textContent?.includes("Cola"),
+    ) as HTMLElement | undefined;
+    expect(option).toBeTruthy();
+    option!.click();
+
+    await vi.waitFor(() =>
+      expect(mockShop.addCartItemByUuid).toHaveBeenCalledWith("p1"),
+    );
+    // The popover stays open so several items can be added in a row.
+    expect(document.body.textContent).toContain("Fanta");
   });
 
   it("ignores keystrokes typed into text inputs", () => {

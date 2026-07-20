@@ -74,6 +74,29 @@ function selectShopUser(user: any) {
   comboOpen.value = false;
 }
 
+// Scanner-less flow: search products by name or barcode and add by uuid.
+const productComboOpen = ref(false);
+const productSearch = ref("");
+
+const filteredProducts = computed(() => {
+  const list = (shop.allProducts ?? []) as any[];
+  const query = productSearch.value.trim().toLowerCase();
+  const filtered = query
+    ? list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          (p.barcode ?? "").includes(query),
+      )
+    : list;
+  return [...filtered].sort((a, b) => a.name.localeCompare(b.name, "de"));
+});
+
+function addProduct(product: any) {
+  shop.addCartItemByUuid(product.uuid);
+  // Stay open and reset the query so several items can be added in a row.
+  productSearch.value = "";
+}
+
 const userData = computed(() => [
   {
     label: `${t("common.name")}:`,
@@ -101,6 +124,41 @@ const userData = computed(() => [
       <!-- Cart Table -->
       <div class="w-3/4 h-full">
         <div class="rounded-lg border p-4 bg-card">
+          <div class="pb-4">
+            <Popover v-model:open="productComboOpen">
+            <PopoverTrigger as-child>
+              <Button variant="outline" class="w-72 justify-between">
+                <span class="flex items-center gap-2 text-muted-foreground">
+                  <Search class="size-4" />
+                  {{ $t("shop.addProduct") }}
+                </span>
+                <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent class="w-72 p-0" align="start">
+              <Command>
+                <CommandInput
+                  v-model="productSearch"
+                  :placeholder="$t('shop.searchProduct')"
+                />
+                <CommandEmpty>{{ $t("products.none") }}</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      v-for="p in filteredProducts"
+                      :key="p.uuid"
+                      :value="`${p.name} ${p.barcode ?? ''}`"
+                      @select="addProduct(p)"
+                    >
+                      <span class="flex-1 truncate">{{ p.name }}</span>
+                      <span class="text-muted-foreground">{{ formatCents(p.price) }}</span>
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+            </Popover>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>

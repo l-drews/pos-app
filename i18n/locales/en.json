@@ -41,6 +41,8 @@
     "somethingWentWrong": "Something went wrong"
   },
   "shop": {
+    "addProduct": "Add product...",
+    "searchProduct": "Search product...",
     "noItems": "No items found. Please scan an item.",
     "selectUser": "Select a user...",
     "searchUser": "Search user...",

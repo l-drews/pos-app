@@ -18,6 +18,9 @@ export const useShopStore = defineStore("shop", () => {
   // All users for search
   const { data: allUsers } = useQuery(orpc.users.getAll.queryOptions());
 
+  // All products for the scanner-less product search
+  const { data: allProducts } = useQuery(orpc.products.getAll.queryOptions());
+
   // All orders for today's total calculation
   const { data: allOrders } = useQuery(orpc.orders.getAll.queryOptions());
 
@@ -99,6 +102,10 @@ export const useShopStore = defineStore("shop", () => {
     addCartMutation.mutate({ barcode });
   }
 
+  function addCartItemByUuid(productUuid: string) {
+    addCartMutation.mutate({ productUuid });
+  }
+
   function incrementCount(item: any) {
     updateCartMutation.mutate({ uuid: item.uuid, count: item.count + 1 });
   }
@@ -149,12 +156,14 @@ export const useShopStore = defineStore("shop", () => {
     searchString,
     cartItems,
     allUsers,
+    allProducts,
     currentUser,
     filteredUsers,
     paymentTotal,
     todaysOrderTotal,
     disablePayment,
     addCartItem,
+    addCartItemByUuid,
     incrementCount,
     decrementCount,
     deleteItem,
