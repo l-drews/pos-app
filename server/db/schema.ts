@@ -6,6 +6,7 @@ import { orderItems, orders, transactions } from "./schema/orders";
 export * from "./schema/users";
 export * from "./schema/products";
 export * from "./schema/orders";
+export * from "./schema/settings";
 
 export const groupsRelations = relations(groups, ({ many }) => ({
   users: many(users),
