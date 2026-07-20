@@ -17,6 +17,10 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      # The "Set version from tag" step modifies package.json deliberately;
+      # the build must not be stamped as dirty because of it.
+      IGNORE_GIT_DIRTY: "1"
     steps:
       - uses: actions/checkout@v4
 
