@@ -20,7 +20,14 @@ const createMutation = useToastMutation({
 
 const updateMutation = useToastMutation({
   ...orpc.products.update.mutationOptions(),
-  onSettled: () => queryCache.invalidateQueries({ key: orpc.products.key() }),
+  onSettled: () => {
+    queryCache.invalidateQueries({ key: orpc.products.key() });
+    // Cart rows embed a product snapshot (name/price) server-side; refetch
+    // them so an edited product updates in the cart immediately. "all"
+    // because the cart query's only subscriber lives in the shop store and
+    // may have no active component right now.
+    queryCache.invalidateQueries({ key: orpc.cart.key() }, "all");
+  },
 });
 
 const deleteMutation = useToastMutation({
