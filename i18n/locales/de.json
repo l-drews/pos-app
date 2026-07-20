@@ -41,6 +41,8 @@
     "somethingWentWrong": "Etwas ist schiefgelaufen"
   },
   "shop": {
+    "addProduct": "Produkt hinzufügen...",
+    "searchProduct": "Produkt suchen...",
     "noItems": "Keine Artikel vorhanden. Bitte einen Artikel scannen.",
     "selectUser": "Benutzer auswählen...",
     "searchUser": "Benutzer suchen...",

@@ -7,7 +7,7 @@ import { useShopStore } from "~/stores/shop";
 // The store is exercised against a faked oRPC layer: queries resolve fixture
 // data, mutations are spies. Pinia and Pinia Colada are the real ones from the
 // Nuxt test environment.
-const { orpc, createOrderMock } = vi.hoisted(() => {
+const { orpc, createOrderMock, addItemMock } = vi.hoisted(() => {
   const USERS = [
     { uuid: "user-a", firstName: "Ada", lastName: "Aber", barcode: "95700001", balance: 5000 },
     { uuid: "user-b", firstName: "Ben", lastName: "Boll", barcode: "95700002", balance: 2000 },
@@ -16,6 +16,7 @@ const { orpc, createOrderMock } = vi.hoisted(() => {
   const CART = [{ uuid: "cart-1", count: 2, product: { name: "Cola", price: 150 } }];
 
   const createOrderMock = vi.fn(async (_input: unknown) => ({}));
+  const addItemMock = vi.fn(async (_input: unknown) => ({}));
 
   const query = (key: string, data: unknown) => ({
     queryOptions: () => ({ key: [key], query: async () => data }),
@@ -28,7 +29,7 @@ const { orpc, createOrderMock } = vi.hoisted(() => {
     cart: {
       getAll: query("cart", CART),
       key: () => ["cart"],
-      addItem: mutation(async () => ({})),
+      addItem: mutation((input) => addItemMock(input)),
       update: mutation(async () => ({})),
       delete: mutation(async () => ({})),
     },
@@ -36,13 +37,19 @@ const { orpc, createOrderMock } = vi.hoisted(() => {
       getAll: query("users", USERS),
       key: () => ["users"],
     },
+    products: {
+      getAll: query("products", [
+        { uuid: "prod-1", name: "Cola", price: 150, barcode: "4006381" },
+      ]),
+      key: () => ["products"],
+    },
     orders: {
       getAll: query("orders", []),
       key: () => ["orders"],
       create: mutation((input) => createOrderMock(input)),
     },
   };
-  return { orpc, createOrderMock };
+  return { orpc, createOrderMock, addItemMock };
 });
 
 mockNuxtImport("useOrpc", () => () => orpc);
@@ -91,6 +98,16 @@ describe("shop store", () => {
     store.selectUser("95700001");
     await vi.waitFor(() => expect(store.currentUser?.uuid).toBe("user-a"));
     expect(store.disablePayment).toBe(false);
+  });
+
+  it("adds a product to the cart by uuid", async () => {
+    const store = await setupStore();
+
+    store.addCartItemByUuid("prod-1");
+
+    await vi.waitFor(() =>
+      expect(addItemMock).toHaveBeenCalledWith({ productUuid: "prod-1" }),
+    );
   });
 
   it("can select a user that has no barcode", async () => {
