@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import type { Locale } from "vue-i18n";
+import type { RouterClient } from "@orpc/server";
+import type { Router } from "~~/server/orpc/router";
 
 const { locale, locales, setLocale } = useI18n();
-const { $client } = useNuxtApp();
+// Nuxt's injection-type inference does not surface $client; pin it to the
+// real router type instead of erasing it with `any`.
+const client = useNuxtApp().$client as RouterClient<Router>;
 
 // Compact button labels; the full edition name lives in the tooltip.
 const SHORT_LABELS: Record<string, string> = { "de-weseby": "we" };
@@ -10,10 +14,10 @@ const shortLabel = (code: string) => SHORT_LABELS[code] ?? code;
 
 function select(code: Locale) {
   setLocale(code);
-  // Persist as the installation-wide preference; failures are non-fatal
-  // (the cookie still covers the current machine).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ($client as any).settings.set({ key: "locale", value: code }).catch(() => {});
+  // Persist as the installation-wide preference. Failures are swallowed;
+  // worst case the database still holds the previous locale and restores it
+  // on the next launch (the database wins over the cookie at boot).
+  client.settings.set({ key: "locale", value: code }).catch(() => {});
 }
 </script>
 
