@@ -8,6 +8,13 @@
       "when": 1777153919362,
       "tag": "0000_fantastic_the_liberteens",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784479204896,
+      "tag": "0001_dark_johnny_storm",
+      "breakpoints": true
     }
   ]
 }

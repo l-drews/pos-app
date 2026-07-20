@@ -1,9 +1,20 @@
 <script setup lang="ts">
+import type { Locale } from "vue-i18n";
+
 const { locale, locales, setLocale } = useI18n();
+const { $client } = useNuxtApp();
 
 // Compact button labels; the full edition name lives in the tooltip.
 const SHORT_LABELS: Record<string, string> = { "de-weseby": "we" };
 const shortLabel = (code: string) => SHORT_LABELS[code] ?? code;
+
+function select(code: Locale) {
+  setLocale(code);
+  // Persist as the installation-wide preference; failures are non-fatal
+  // (the cookie still covers the current machine).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ($client as any).settings.set({ key: "locale", value: code }).catch(() => {});
+}
 </script>
 
 <template>
@@ -19,7 +30,7 @@ const shortLabel = (code: string) => SHORT_LABELS[code] ?? code;
           : 'text-muted-foreground hover:text-sidebar-foreground'
       "
       :title="l.name"
-      @click="setLocale(l.code)"
+      @click="select(l.code)"
     >
       {{ shortLabel(l.code) }}
     </button>
