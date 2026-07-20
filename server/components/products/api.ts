@@ -13,7 +13,13 @@ export const productRouter = base.router({
       z.object({
         name: z.string().min(1),
         price: z.int().min(0),
-        barcode: z.string().optional(),
+        // "" (or whitespace) means "no barcode" and is stored as NULL —
+        // never as "", which would collide on the unique constraint.
+        barcode: z
+          .string()
+          .trim()
+          .nullish()
+          .transform((v) => (v === undefined ? undefined : v || null)),
       }),
     )
     .handler(async ({ context: { db }, input }) => {
@@ -50,7 +56,12 @@ export const productRouter = base.router({
         uuid: z.uuid(),
         name: z.string().min(1).optional(),
         price: z.int().min(0).optional(),
-        barcode: z.string().nullable().optional(),
+        // Absent = keep, ""/null = clear (normalized to NULL, never "").
+        barcode: z
+          .string()
+          .trim()
+          .nullish()
+          .transform((v) => (v === undefined ? undefined : v || null)),
       }),
     )
     .handler(async ({ context: { db }, input }) => {

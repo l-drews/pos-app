@@ -14,6 +14,11 @@ const { orpc, restoreMock, createMock, updateMock } = vi.hoisted(() => {
   const mutation = (impl?: (input: unknown) => Promise<unknown>) => ({
     mutationOptions: () => ({ mutation: impl ?? (async () => ({})) }),
   });
+  // Called inside key()/query() so the reactive input is unwrapped at
+  // evaluation time, exactly once per definition of "included".
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const includeDeleted = (opts: any) =>
+    typeof opts.input === "function" ? !!opts.input().includeDeleted : false;
   const orpc = {
     products: {
       // Mirrors the server: includeDeleted filters, and the key varies with
@@ -22,15 +27,11 @@ const { orpc, restoreMock, createMock, updateMock } = vi.hoisted(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         queryOptions: (opts: any = {}) => ({
           ...opts,
-          key: () => [
-            "products",
-            String(typeof opts.input === "function" ? !!opts.input().includeDeleted : false),
-          ],
-          query: async () => {
-            const include =
-              typeof opts.input === "function" ? !!opts.input().includeDeleted : false;
-            return include ? PRODUCTS : PRODUCTS.filter((p) => !p.deletedAt);
-          },
+          key: () => ["products", String(includeDeleted(opts))],
+          query: async () =>
+            includeDeleted(opts)
+              ? PRODUCTS
+              : PRODUCTS.filter((p) => !p.deletedAt),
         }),
       },
       key: () => ["products"],
@@ -38,6 +39,9 @@ const { orpc, restoreMock, createMock, updateMock } = vi.hoisted(() => {
       update: mutation((input) => updateMock(input)),
       delete: mutation(),
       restore: mutation((input) => restoreMock(input)),
+    },
+    cart: {
+      key: () => ["cart"],
     },
   };
   return { orpc, restoreMock, createMock, updateMock };

@@ -3,9 +3,16 @@
 // and future modal built from the shared shadcn primitives — DialogFooter and
 // AlertDialogFooter render data-slot markers, and all footers order their
 // buttons cancel-first, confirm-last.
+//
+// Caveat: reka-ui alert dialogs auto-focus their Cancel button on open, and a
+// focused button keeps native Enter behavior (see below) — so in an alert
+// dialog Enter activates Cancel unless the user first moves focus elsewhere.
+// That is deliberate double-Enter protection for destructive confirms; this
+// plugin only covers the unfocused (body/content) case there.
 export default defineNuxtPlugin(() => {
   window.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter" || e.defaultPrevented) return;
+    // isComposing: the Enter that commits an IME composition must not confirm.
+    if (e.key !== "Enter" || e.isComposing || e.defaultPrevented) return;
 
     const target = e.target as HTMLElement | null;
     const tag = target?.tagName;
