@@ -196,9 +196,9 @@ function onConfirm() {
         </div>
         <div class="flex items-center gap-2">
           <Switch
-            :checked="user.generateBarcode"
+            :model-value="user.generateBarcode"
             :disabled="!!user.barcode"
-            @update:checked="user.generateBarcode = $event"
+            @update:model-value="user.generateBarcode = $event"
           />
           <Label>{{ user.barcode ? $t("users.hasBarcode") : $t("users.generateBarcode") }}</Label>
         </div>
