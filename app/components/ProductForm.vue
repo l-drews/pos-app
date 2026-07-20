@@ -2,11 +2,11 @@
 interface Product {
   uuid?: string;
   name: string;
-  barcode: string;
+  barcode?: string | null;
   price: number;
 }
 
-defineProps<{
+const props = defineProps<{
   title: string;
   confirmText?: string;
   cancelText?: string;
@@ -23,10 +23,8 @@ const product = ref<Product>({ name: "", barcode: "", price: 0 });
 
 watch(active, (val) => {
   if (val) {
-    const props = getCurrentInstance()?.props;
-    const sel = props?.selected as Product | null;
-    product.value = sel
-      ? { ...sel }
+    product.value = props.selected
+      ? { ...props.selected }
       : { name: "", barcode: "", price: 0 };
   }
 });
@@ -37,12 +35,16 @@ function onCancel() {
 }
 
 function onConfirm() {
-  const result = { ...product.value };
-  const props = getCurrentInstance()?.props;
-  const sel = props?.selected as Product | null;
-  result.uuid = sel?.uuid;
+  const barcode = product.value.barcode?.trim() ?? "";
   active.value = false;
-  emit("on-confirm", result);
+  emit("on-confirm", {
+    ...product.value,
+    // An empty barcode must not be stored as "" (the unique constraint would
+    // collide on the second barcode-less product): omit it on create, clear
+    // it explicitly on update.
+    barcode: barcode || (props.selected ? null : undefined),
+    uuid: props.selected?.uuid,
+  });
 }
 </script>
 
