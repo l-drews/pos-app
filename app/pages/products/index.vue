@@ -25,7 +25,13 @@ const updateMutation = useToastMutation({
 
 const deleteMutation = useToastMutation({
   ...orpc.products.delete.mutationOptions(),
-  onSettled: () => queryCache.invalidateQueries({ key: orpc.products.key() }),
+  onSettled: () => {
+    queryCache.invalidateQueries({ key: orpc.products.key() });
+    // Deleting a product also wipes its cart rows server-side; force-refetch
+    // the cart even though its only subscriber lives in the shop store and
+    // may have no active component right now ("all").
+    queryCache.invalidateQueries({ key: orpc.cart.key() }, "all");
+  },
 });
 
 const restoreMutation = useToastMutation({
@@ -113,12 +119,12 @@ function refresh() {
             v-for="product in products"
             :key="product.uuid"
             class="cursor-pointer"
-            :class="(product as any).deletedAt ? 'opacity-60' : ''"
+            :class="product.deletedAt ? 'opacity-60' : ''"
             @click="navigateTo(`/products/${product.uuid}`)"
           >
             <TableCell>
               {{ product.name }}
-              <Badge v-if="(product as any).deletedAt" variant="outline" class="ml-2">
+              <Badge v-if="product.deletedAt" variant="outline" class="ml-2">
                 {{ $t("products.deleted") }}
               </Badge>
             </TableCell>
@@ -126,7 +132,7 @@ function refresh() {
             <TableCell>{{ formatCents(product.price) }}</TableCell>
             <TableCell class="text-right">
               <Button
-                v-if="(product as any).deletedAt"
+                v-if="product.deletedAt"
                 variant="ghost"
                 size="icon"
                 :title="$t('products.restore')"

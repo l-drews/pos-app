@@ -126,8 +126,9 @@ function onConfirm() {
   }
   errors.value = {};
 
+  // Keep the switch's generateBarcode choice; the watch already forces it
+  // off for users that come in with a barcode.
   const payload: User = { ...user.value };
-  payload.generateBarcode = payload.barcode == null;
   delete payload.barcode;
   payload.uuid = props.selected?.uuid;
   // Only send an image when a new file was picked; omitting the field keeps

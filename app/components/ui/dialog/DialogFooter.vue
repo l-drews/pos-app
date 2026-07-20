@@ -17,11 +17,13 @@ const props = withDefaults(defineProps<{
     data-slot="dialog-footer"
     :class="cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', props.class)"
   >
-    <slot />
+    <!-- Keep the slot last: the enter-confirm plugin treats the footer's
+         last button as the confirm action. -->
     <DialogClose v-if="showCloseButton" as-child>
       <Button variant="outline">
         Close
       </Button>
     </DialogClose>
+    <slot />
   </div>
 </template>

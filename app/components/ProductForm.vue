@@ -39,10 +39,9 @@ function onConfirm() {
   active.value = false;
   emit("on-confirm", {
     ...product.value,
-    // An empty barcode must not be stored as "" (the unique constraint would
-    // collide on the second barcode-less product): omit it on create, clear
-    // it explicitly on update.
-    barcode: barcode || (props.selected ? null : undefined),
+    // An empty barcode is sent as null (no barcode); the API normalizes ""
+    // away server-side too, so it can never collide on the unique constraint.
+    barcode: barcode || null,
     uuid: props.selected?.uuid,
   });
 }
@@ -70,7 +69,12 @@ function onConfirm() {
       </div>
       <DialogFooter>
         <Button variant="outline" @click="onCancel()">{{ cancelText ?? $t("common.cancel") }}</Button>
-        <Button @click="onConfirm()">{{ confirmText ?? $t("common.save") }}</Button>
+        <Button
+          :disabled="!product.name.trim() || product.price <= 0"
+          @click="onConfirm()"
+        >
+          {{ confirmText ?? $t("common.save") }}
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

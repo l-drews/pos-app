@@ -1,5 +1,5 @@
-import { and, eq, isNull } from "drizzle-orm";
-import { type Db, tables } from "~~/server/utils/drizzle";
+import { and, eq } from "drizzle-orm";
+import { type Db, productIsActive, tables } from "~~/server/utils/drizzle";
 import { NotFoundError, ValidationError } from "~~/server/utils/errors";
 
 export class CartService {
@@ -14,10 +14,7 @@ export class CartService {
         .select()
         .from(tables.products)
         .where(
-          and(
-            eq(tables.products.uuid, input.productUuid),
-            isNull(tables.products.deletedAt),
-          ),
+          and(eq(tables.products.uuid, input.productUuid), productIsActive()),
         )
         .get();
     } else if (input.barcode) {
@@ -25,10 +22,7 @@ export class CartService {
         .select()
         .from(tables.products)
         .where(
-          and(
-            eq(tables.products.barcode, input.barcode),
-            isNull(tables.products.deletedAt),
-          ),
+          and(eq(tables.products.barcode, input.barcode), productIsActive()),
         )
         .get();
     } else {

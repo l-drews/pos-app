@@ -59,7 +59,9 @@ describe("global Enter-to-confirm for modals", () => {
     await vi.waitFor(() => expect(wrapper.emitted("on-confirm")).toBeTruthy());
   });
 
-  it("confirms an alert dialog when Enter is pressed", async () => {
+  it("confirms an alert dialog when Enter is pressed with no focused control", async () => {
+    // Models the state after clicking non-interactive dialog content: the
+    // event targets the body, so the plugin (not native activation) acts.
     wrapper = await mountSuspended(ConfirmDialog, {
       props: { active: true },
     });
@@ -70,6 +72,27 @@ describe("global Enter-to-confirm for modals", () => {
     pressEnter();
 
     await vi.waitFor(() => expect(wrapper.emitted("on-confirm")).toBeTruthy());
+  });
+
+  it("defers to the focused button in an alert dialog", async () => {
+    // In production reka-ui's focus trap puts focus on the CANCEL button when
+    // an alert dialog opens; Enter then activates it natively, and the plugin
+    // must stay out of the way rather than clicking the confirm button.
+    wrapper = await mountSuspended(ConfirmDialog, {
+      props: { active: true },
+    });
+    await vi.waitFor(() =>
+      expect(document.querySelector('[role="alertdialog"]')).toBeTruthy(),
+    );
+
+    const cancel = document.querySelector(
+      '[data-slot="alert-dialog-footer"] button',
+    ) as HTMLButtonElement;
+    expect(cancel).toBeTruthy();
+    pressEnter(cancel);
+    await nextTick();
+
+    expect(wrapper.emitted("on-confirm")).toBeFalsy();
   });
 
   it("does nothing while the confirm button is disabled", async () => {

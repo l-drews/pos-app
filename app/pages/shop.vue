@@ -78,14 +78,18 @@ function selectShopUser(user: any) {
 const productComboOpen = ref(false);
 const productSearch = ref("");
 
+// Case- and diacritic-insensitive ("kase" finds "Käse"), matching the
+// accent-insensitive filter the Command widget itself applies on top.
+const fold = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+
 const filteredProducts = computed(() => {
   const list = (shop.allProducts ?? []) as any[];
-  const query = productSearch.value.trim().toLowerCase();
+  const query = fold(productSearch.value.trim());
   const filtered = query
     ? list.filter(
         (p) =>
-          p.name.toLowerCase().includes(query) ||
-          (p.barcode ?? "").includes(query),
+          fold(p.name).includes(query) || fold(p.barcode ?? "").includes(query),
       )
     : list;
   return [...filtered].sort((a, b) => a.name.localeCompare(b.name, "de"));
@@ -126,37 +130,46 @@ const userData = computed(() => [
         <div class="rounded-lg border p-4 bg-card">
           <div class="pb-4">
             <Popover v-model:open="productComboOpen">
-            <PopoverTrigger as-child>
-              <Button variant="outline" class="w-72 justify-between">
-                <span class="flex items-center gap-2 text-muted-foreground">
-                  <Search class="size-4" />
-                  {{ $t("shop.addProduct") }}
-                </span>
-                <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-72 p-0" align="start">
-              <Command>
-                <CommandInput
-                  v-model="productSearch"
-                  :placeholder="$t('shop.searchProduct')"
-                />
-                <CommandEmpty>{{ $t("products.none") }}</CommandEmpty>
-                <CommandList>
-                  <CommandGroup>
-                    <CommandItem
-                      v-for="p in filteredProducts"
-                      :key="p.uuid"
-                      :value="`${p.name} ${p.barcode ?? ''}`"
-                      @select="addProduct(p)"
-                    >
-                      <span class="flex-1 truncate">{{ p.name }}</span>
-                      <span class="text-muted-foreground">{{ formatCents(p.price) }}</span>
-                    </CommandItem>
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  :aria-expanded="productComboOpen"
+                  class="w-72 justify-between"
+                >
+                  <span class="flex items-center gap-2 text-muted-foreground">
+                    <Search class="size-4" />
+                    {{ $t("shop.addProduct") }}
+                  </span>
+                  <ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-72 p-0" align="start">
+                <Command>
+                  <CommandInput
+                    v-model="productSearch"
+                    :placeholder="$t('shop.searchProduct')"
+                  />
+                  <CommandEmpty>{{ $t("products.none") }}</CommandEmpty>
+                  <CommandList>
+                    <CommandGroup>
+                      <CommandItem
+                        v-for="p in filteredProducts"
+                        :key="p.uuid"
+                        :value="`${p.name} ${p.barcode ?? ''}`"
+                        @select="addProduct(p)"
+                      >
+                        <span class="flex-1 truncate">{{ p.name }}</span>
+                        <!-- Rendered (screen-reader-only) so the Command
+                             widget's textContent-based filter matches barcode
+                             queries too. -->
+                        <span v-if="p.barcode" class="sr-only">{{ p.barcode }}</span>
+                        <span class="text-muted-foreground">{{ formatCents(p.price) }}</span>
+                      </CommandItem>
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
             </Popover>
           </div>
           <Table>
