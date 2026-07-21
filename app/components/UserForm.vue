@@ -41,12 +41,15 @@ const userSchema = z.object({
 
 type FieldErrors = Partial<Record<keyof z.infer<typeof userSchema>, string>>;
 
-const user = ref<User>({
+// Internal state keeps barcode as a plain string for the input binding;
+// onConfirm converts "" to null (clear) or drops it (generate).
+const user = ref<Omit<User, "barcode"> & { barcode: string }>({
   firstName: "",
   lastName: "",
   birthDate: null,
   groupUuid: null,
   generateBarcode: true,
+  barcode: "",
 });
 
 const errors = ref<FieldErrors>({});
@@ -78,7 +81,7 @@ watch(active, (val) => {
         birthDate: props.selected.birthDate,
         groupUuid: props.selected.groupUuid,
         generateBarcode: false,
-        barcode: props.selected.barcode,
+        barcode: props.selected.barcode ?? "",
       };
     } else {
       user.value = {
@@ -87,6 +90,7 @@ watch(active, (val) => {
         birthDate: null,
         groupUuid: null,
         generateBarcode: true,
+        barcode: "",
       };
     }
   }
@@ -126,10 +130,14 @@ function onConfirm() {
   }
   errors.value = {};
 
-  // Keep the switch's generateBarcode choice; the watch already forces it
-  // off for users that come in with a barcode.
   const payload: User = { ...user.value };
-  delete payload.barcode;
+  // With the generate switch on the server assigns the barcode, so the field
+  // must be absent; otherwise the typed value is sent ("" clears it to null).
+  if (payload.generateBarcode) {
+    delete payload.barcode;
+  } else {
+    payload.barcode = payload.barcode?.trim() || null;
+  }
   payload.uuid = props.selected?.uuid;
   // Only send an image when a new file was picked; omitting the field keeps
   // the user's existing image.
@@ -195,13 +203,23 @@ function onConfirm() {
             {{ $t(errors.birthDate) }}
           </p>
         </div>
-        <div class="flex items-center gap-2">
-          <Switch
-            :model-value="user.generateBarcode"
-            :disabled="!!user.barcode"
-            @update:model-value="user.generateBarcode = $event"
+        <div class="grid gap-2">
+          <Label for="user-barcode">{{ $t("common.barcode") }}</Label>
+          <Input
+            id="user-barcode"
+            v-model="user.barcode"
+            :disabled="user.generateBarcode"
+            :placeholder="$t('common.barcode')"
           />
-          <Label>{{ user.barcode ? $t("users.hasBarcode") : $t("users.generateBarcode") }}</Label>
+          <div class="flex items-center gap-2">
+            <Switch
+              :model-value="user.generateBarcode"
+              @update:model-value="user.generateBarcode = $event"
+            />
+            <Label>
+              {{ selected ? $t("users.generateNewBarcode") : $t("users.generateBarcode") }}
+            </Label>
+          </div>
         </div>
         <div class="grid gap-2">
           <Label>{{ $t("common.group") }}</Label>

@@ -37,3 +37,11 @@ export class ValidationError extends ServiceError {
     this.name = "ValidationError";
   }
 }
+
+/** True when `err` is a SQLite UNIQUE-constraint violation. */
+export function isUniqueViolation(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    `${err.cause ?? err.message}`.includes("UNIQUE constraint failed")
+  );
+}

@@ -6,6 +6,7 @@ import { imagesDir } from "~~/server/utils/images";
 import { generateNextUserBarcode } from "~~/server/utils/barcode";
 import {
   ConflictError,
+  isUniqueViolation,
   NotFoundError,
   ValidationError,
 } from "~~/server/utils/errors";
@@ -46,7 +47,7 @@ interface CreateUserInput {
   lastName: string;
   birthDate?: string;
   groupUuid?: string;
-  barcode?: string;
+  barcode?: string | null;
   generateBarcode?: boolean;
   image?: ImageUpload;
 }
@@ -75,9 +76,9 @@ export class UserService {
 
   async create(input: CreateUserInput) {
     let imagePath: string | null = null;
+    let barcode = input.barcode;
 
     try {
-      let barcode = input.barcode;
       if (input.generateBarcode && !barcode) {
         barcode = await this.generateBarcode();
       }
@@ -100,6 +101,12 @@ export class UserService {
       return this.getByUuidWithRelations(user.uuid);
     } catch (err) {
       if (imagePath) deleteImage(imagePath);
+      // The only UNIQUE column on users besides the primary key is barcode.
+      if (isUniqueViolation(err)) {
+        throw new ConflictError(
+          `Barcode '${barcode}' is already used by another user`,
+        );
+      }
       throw err;
     }
   }
@@ -131,11 +138,23 @@ export class UserService {
     if (barcode !== undefined) updateData.barcode = barcode;
     if (imagePath !== undefined) updateData.imagePath = imagePath;
 
-    const [updated] = await this.db
-      .update(tables.users)
-      .set(updateData)
-      .where(eq(tables.users.uuid, uuid))
-      .returning();
+    let updated;
+    try {
+      [updated] = await this.db
+        .update(tables.users)
+        .set(updateData)
+        .where(eq(tables.users.uuid, uuid))
+        .returning();
+    } catch (err) {
+      // Don't leak the just-saved replacement image when the update fails.
+      if (imagePath) deleteImage(imagePath);
+      if (isUniqueViolation(err)) {
+        throw new ConflictError(
+          `Barcode '${barcode}' is already used by another user`,
+        );
+      }
+      throw err;
+    }
     if (!updated) throw new NotFoundError("User", uuid);
 
     if (imagePath !== undefined && imagePath !== existing.imagePath) {

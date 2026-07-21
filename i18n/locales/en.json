@@ -76,7 +76,7 @@
     "deleteBody": "Permanently delete {name} along with all related orders and transactions? This cannot be undone.",
     "deleteBlocked": "Withdraw the balance before deleting",
     "generateBarcode": "Generate barcode",
-    "hasBarcode": "User already has a barcode",
+    "generateNewBarcode": "Generate new barcode",
     "selectGroup": "Select a group",
     "noGroup": "No group",
     "selectImage": "Select image"

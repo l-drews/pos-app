@@ -20,7 +20,6 @@
     "noMatch": "Keine LaKis entsprechen der Suche",
     "imported": "{n} LaKi importiert | {n} LaKis importiert",
     "notFound": "LaKi nicht gefunden",
-    "hasBarcode": "LaKi hat bereits einen Barcode",
     "selectGroup": "Zelt auswählen",
     "noGroup": "Kein Zelt",
     "deleteTitle": "LaKi löschen"

@@ -35,12 +35,18 @@ function loadsUnderElectron() {
 
 if (target === "node") {
   if (!loadsUnderNode()) {
-    console.log("better-sqlite3 is built for Electron — rebuilding for Node...");
+    console.log(
+      "better-sqlite3 is built for Electron — rebuilding for Node...",
+    );
     execSync("npm rebuild better-sqlite3", { stdio: "inherit" });
   }
 } else {
   if (!loadsUnderElectron()) {
-    console.log("better-sqlite3 is built for Node — rebuilding for Electron...");
-    execSync("pnpm exec electron-builder install-app-deps", { stdio: "inherit" });
+    console.log(
+      "better-sqlite3 is built for Node — rebuilding for Electron...",
+    );
+    execSync("pnpm exec electron-builder install-app-deps", {
+      stdio: "inherit",
+    });
   }
 }

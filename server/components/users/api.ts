@@ -30,7 +30,13 @@ export const userRouter = base.router({
         lastName: z.string().min(1),
         birthDate: z.string().min(1),
         groupUuid: z.uuid().optional(),
-        barcode: z.string().optional(),
+        // "" (or whitespace) means "no barcode" and is stored as NULL —
+        // never as "", which would collide on the unique constraint.
+        barcode: z
+          .string()
+          .trim()
+          .nullish()
+          .transform((v) => (v === undefined ? undefined : v || null)),
         generateBarcode: z.boolean().optional(),
         image: imageSchema,
       }),
@@ -66,7 +72,12 @@ export const userRouter = base.router({
         lastName: z.string().min(1).optional(),
         birthDate: z.string().optional(),
         groupUuid: z.uuid().nullable().optional(),
-        barcode: z.string().nullable().optional(),
+        // Absent = keep, ""/null = clear (normalized to NULL, never "").
+        barcode: z
+          .string()
+          .trim()
+          .nullish()
+          .transform((v) => (v === undefined ? undefined : v || null)),
         generateBarcode: z.boolean().optional(),
         image: imageSchema,
       }),

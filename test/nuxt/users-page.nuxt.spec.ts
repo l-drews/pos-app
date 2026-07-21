@@ -5,7 +5,7 @@ import UsersPage from "~/pages/users/index.vue";
 
 // Balances are deliberately in a different order than first names so that
 // name-sort and balance-sort assertions can't pass by accident.
-const { orpc } = vi.hoisted(() => {
+const { orpc, createMock, updateMock } = vi.hoisted(() => {
   const USERS = [
     {
       uuid: "u1",
@@ -42,15 +42,17 @@ const { orpc } = vi.hoisted(() => {
       ...extra,
     }),
   });
-  const mutation = () => ({
-    mutationOptions: () => ({ mutation: async () => ({}) }),
+  const createMock = vi.fn(async (_input: unknown) => ({}));
+  const updateMock = vi.fn(async (_input: unknown) => ({}));
+  const mutation = (impl?: (input: unknown) => Promise<unknown>) => ({
+    mutationOptions: () => ({ mutation: impl ?? (async () => ({})) }),
   });
   const orpc = {
     users: {
       getAll: query("users", USERS),
       key: () => ["users"],
-      create: mutation(),
-      update: mutation(),
+      create: mutation((input) => createMock(input)),
+      update: mutation((input) => updateMock(input)),
       delete: mutation(),
       importCsv: mutation(),
     },
@@ -59,7 +61,7 @@ const { orpc } = vi.hoisted(() => {
       key: () => ["groups"],
     },
   };
-  return { orpc };
+  return { orpc, createMock, updateMock };
 });
 
 mockNuxtImport("useOrpc", () => () => orpc);
@@ -131,5 +133,95 @@ describe("users page search and sorting", () => {
   it("sorts users without a group first when sorting by group ascending", async () => {
     await headerButton("Group").trigger("click");
     expect(firstNames()).toEqual(["Milo", "Zara", "Anna"]); // (none), Blue, Red
+  });
+});
+
+describe("users page edit dialog", () => {
+  let wrapper: VueWrapper<unknown>;
+
+  const openEditDialog = async (firstName: string) => {
+    const row = wrapper
+      .findAll("tbody tr")
+      .find((r) => r.text().includes(firstName));
+    await row!.findAll("button")[0]!.trigger("click"); // pencil
+
+    await vi.waitFor(() =>
+      expect(document.querySelector("#user-barcode")).toBeTruthy(),
+    );
+    return document.querySelector("#user-barcode") as HTMLInputElement;
+  };
+
+  const save = () => {
+    const button = [...document.querySelectorAll("button")].find(
+      (b) => b.textContent?.trim() === "Save",
+    ) as HTMLButtonElement;
+    button.click();
+  };
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    wrapper = await mountSuspended(UsersPage);
+    await vi.waitFor(() =>
+      expect(wrapper.findAll("tbody tr").length).toBeGreaterThan(1),
+    );
+  });
+
+  afterEach(() => wrapper.unmount());
+
+  it("edits an existing user's barcode", async () => {
+    const barcodeInput = await openEditDialog("Anna");
+    expect(barcodeInput.value).toBe("95700002");
+
+    barcodeInput.value = "95709999";
+    barcodeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    // The Input's useVModel is passive — the parent binding syncs next tick.
+    await nextTick();
+    save();
+
+    await vi.waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          uuid: "u2",
+          barcode: "95709999",
+          generateBarcode: false,
+        }),
+      ),
+    );
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("clears a barcode by emptying the field", async () => {
+    const barcodeInput = await openEditDialog("Milo");
+    expect(barcodeInput.value).toBe("95700003");
+
+    barcodeInput.value = "";
+    barcodeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    save();
+
+    await vi.waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ uuid: "u3", barcode: null }),
+      ),
+    );
+  });
+
+  it("omits the barcode and sets generateBarcode when regenerating", async () => {
+    await openEditDialog("Anna");
+
+    const generateSwitch = document.querySelector(
+      '[role="switch"]',
+    ) as HTMLButtonElement;
+    expect(generateSwitch.getAttribute("aria-checked")).toBe("false");
+    generateSwitch.click();
+    await nextTick();
+    save();
+
+    await vi.waitFor(() =>
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ uuid: "u2", generateBarcode: true }),
+      ),
+    );
+    expect(updateMock.mock.calls[0]![0]).not.toHaveProperty("barcode");
   });
 });

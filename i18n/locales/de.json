@@ -76,7 +76,7 @@
     "deleteBody": "{name} mit allen zugehörigen Bestellungen und Transaktionen endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
     "deleteBlocked": "Vor dem Löschen das Guthaben auszahlen",
     "generateBarcode": "Barcode generieren",
-    "hasBarcode": "Benutzer hat bereits einen Barcode",
+    "generateNewBarcode": "Neuen Barcode generieren",
     "selectGroup": "Gruppe auswählen",
     "noGroup": "Keine Gruppe",
     "selectImage": "Bild auswählen"

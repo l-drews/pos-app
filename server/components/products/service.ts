@@ -1,13 +1,10 @@
 import { and, eq, or } from "drizzle-orm";
 import { type Db, productIsActive, tables } from "~~/server/utils/drizzle";
-import { ConflictError, NotFoundError } from "~~/server/utils/errors";
-
-function isUniqueViolation(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    `${err.cause ?? err.message}`.includes("UNIQUE constraint failed")
-  );
-}
+import {
+  ConflictError,
+  isUniqueViolation,
+  NotFoundError,
+} from "~~/server/utils/errors";
 
 export class ProductService {
   constructor(private db: Db) {}
