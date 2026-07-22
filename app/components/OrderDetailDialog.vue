@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { Trash2 } from "lucide-vue-next";
+
 // Shows a single order's line items. Expects an order with `items` that each
 // include their `product` (see orders.list / orders.getByUser).
-const props = defineProps<{ order?: any | null }>();
+// With `deletable`, a delete button emits `on-delete` — confirmation and the
+// actual mutation are the parent page's job.
+const props = defineProps<{ order?: any | null; deletable?: boolean }>();
 const active = defineModel<boolean>("active", { default: false });
+const emit = defineEmits<{ "on-delete": [order: any] }>();
 </script>
 
 <template>
@@ -49,6 +54,13 @@ const active = defineModel<boolean>("active", { default: false });
           </TableRow>
         </TableFooter>
       </Table>
+
+      <DialogFooter v-if="props.deletable && props.order">
+        <Button variant="destructive" @click="emit('on-delete', props.order)">
+          <Trash2 class="mr-2 size-4" />
+          {{ $t("orders.delete") }}
+        </Button>
+      </DialogFooter>
     </DialogContent>
   </Dialog>
 </template>

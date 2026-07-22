@@ -35,6 +35,7 @@ const { orpc, createTransactionMock } = vi.hoisted(() => {
     orders: {
       getByUser: query("user-orders", []),
       key: () => ["orders"],
+      delete: mutation(),
     },
     transactions: {
       create: mutation((input) => createTransactionMock(input)),

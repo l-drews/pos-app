@@ -106,7 +106,10 @@
     "qty": "Menge",
     "unitPrice": "Einzelpreis",
     "noItemsInOrder": "Keine Artikel",
-    "noOrdersDay": "Keine Bestellungen an diesem Tag"
+    "noOrdersDay": "Keine Bestellungen an diesem Tag",
+    "delete": "Bestellung löschen",
+    "deleteTitle": "Bestellung löschen",
+    "deleteBody": "Diese Bestellung über {amount} löschen und {name} das Geld zurückerstatten? Dies kann nicht rückgängig gemacht werden."
   },
   "transactions": {
     "create": "Transaktion erstellen",

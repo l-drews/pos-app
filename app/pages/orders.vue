@@ -38,10 +38,27 @@ function toggleSort(column: "createdAt" | "amount") {
 
 const selectedOrder = ref<any>(null);
 const detailOpen = ref(false);
+const deleteConfirm = ref(false);
 
 function openOrder(order: any) {
   selectedOrder.value = order;
   detailOpen.value = true;
+}
+
+const deleteOrderMutation = useToastMutation({
+  ...orpc.orders.delete.mutationOptions(),
+  onSettled: () => {
+    // The refund changes the user's balance and removes a transaction.
+    queryCache.invalidateQueries({ key: orpc.orders.key() });
+    queryCache.invalidateQueries({ key: orpc.users.key() });
+    queryCache.invalidateQueries({ key: orpc.transactions.key() });
+  },
+});
+
+function onDeleteConfirm() {
+  if (!selectedOrder.value) return;
+  deleteOrderMutation.mutate({ uuid: selectedOrder.value.uuid });
+  detailOpen.value = false;
 }
 
 function refresh() {
@@ -51,7 +68,24 @@ function refresh() {
 
 <template>
   <section class="container mx-auto p-4">
-    <OrderDetailDialog v-model:active="detailOpen" :order="selectedOrder" />
+    <OrderDetailDialog
+      v-model:active="detailOpen"
+      :order="selectedOrder"
+      deletable
+      @on-delete="deleteConfirm = true"
+    />
+    <ConfirmDialog
+      v-model:active="deleteConfirm"
+      :title="$t('orders.deleteTitle')"
+      :body="
+        $t('orders.deleteBody', {
+          amount: formatCents(selectedOrder?.amount ?? 0),
+          name: `${selectedOrder?.user?.firstName ?? ''} ${selectedOrder?.user?.lastName ?? ''}`.trim(),
+        })
+      "
+      :buttons="[$t('common.cancel'), $t('common.delete')]"
+      @on-confirm="onDeleteConfirm"
+    />
 
     <div class="flex justify-end items-center pb-4">
       <Button variant="outline" size="icon" @click="refresh()">

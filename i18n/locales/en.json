@@ -106,7 +106,10 @@
     "qty": "Qty",
     "unitPrice": "Unit price",
     "noItemsInOrder": "No items",
-    "noOrdersDay": "No orders on this day"
+    "noOrdersDay": "No orders on this day",
+    "delete": "Delete order",
+    "deleteTitle": "Delete order",
+    "deleteBody": "Delete this order of {amount} and refund the money to {name}? This cannot be undone."
   },
   "transactions": {
     "create": "Create transaction",

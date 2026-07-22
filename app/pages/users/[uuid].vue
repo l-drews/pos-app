@@ -41,6 +41,7 @@ const deleteConfirm = ref(false);
 
 const selectedOrder = ref<any>(null);
 const orderDetailOpen = ref(false);
+const orderDeleteConfirm = ref(false);
 
 function openOrder(order: any) {
   selectedOrder.value = order;
@@ -70,6 +71,22 @@ const deleteMutation = useToastMutation({
   onSuccess: () => navigateTo("/users"),
   onSettled: invalidateUsers,
 });
+
+const deleteOrderMutation = useToastMutation({
+  ...orpc.orders.delete.mutationOptions(),
+  onSettled: () => {
+    // The refund changes the balance and removes a transaction.
+    invalidateUsers();
+    queryCache.invalidateQueries({ key: orpc.orders.key() });
+    queryCache.invalidateQueries({ key: orpc.transactions.key() });
+  },
+});
+
+function onOrderDeleteConfirm() {
+  if (!selectedOrder.value) return;
+  deleteOrderMutation.mutate({ uuid: selectedOrder.value.uuid });
+  orderDetailOpen.value = false;
+}
 
 function onEditConfirm(payload: any) {
   updateMutation.mutate(payload);
@@ -117,7 +134,24 @@ function onDeleteConfirm() {
       :buttons="[$t('common.cancel'), $t('common.delete')]"
       @on-confirm="onDeleteConfirm"
     />
-    <OrderDetailDialog v-model:active="orderDetailOpen" :order="selectedOrder" />
+    <OrderDetailDialog
+      v-model:active="orderDetailOpen"
+      :order="selectedOrder"
+      deletable
+      @on-delete="orderDeleteConfirm = true"
+    />
+    <ConfirmDialog
+      v-model:active="orderDeleteConfirm"
+      :title="$t('orders.deleteTitle')"
+      :body="
+        $t('orders.deleteBody', {
+          amount: formatCents(selectedOrder?.amount ?? 0),
+          name: `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim(),
+        })
+      "
+      :buttons="[$t('common.cancel'), $t('common.delete')]"
+      @on-confirm="onOrderDeleteConfirm"
+    />
     <TransactionForm
       v-model:active="transactionOpen"
       :title="$t('transactions.create')"
