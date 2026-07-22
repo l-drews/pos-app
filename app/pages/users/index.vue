@@ -131,7 +131,9 @@ function onImportFileSelect(e: Event) {
 
 async function importUsers() {
   if (importFile.value) {
-    const text = await importFile.value.text();
+    // Not file.text(): that always decodes UTF-8 and would turn the umlauts
+    // in Excel's Windows-1252 ("ANSI") exports into "�".
+    const text = decodeCsvBuffer(await importFile.value.arrayBuffer());
     importCsvMutation.mutate({ csvContent: text });
     importFile.value = null;
   }
@@ -159,7 +161,9 @@ function exportUsers() {
       ].join(";"),
     );
   }
-  const data = lines.join("\n");
+  // The BOM makes Excel detect UTF-8 — without it, Excel assumes ANSI and
+  // garbles umlauts. The importer strips it, so exports re-import cleanly.
+  const data = "\uFEFF" + lines.join("\n");
   const el = document.createElement("a");
   el.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(data));
   el.setAttribute("download", "users.csv");
