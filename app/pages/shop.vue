@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useQuery } from "@pinia/colada";
 import { isUserBarcode, isProductBarcode } from "~/utils/barcode";
 import {
   Minus,
@@ -11,6 +12,18 @@ import {
 
 const shop = useShopStore();
 const { t } = useI18n();
+
+// The store's own query subscriptions are tracked to whichever component
+// first created the store; once that unmounts they are inactive for good, so
+// plain cache invalidations (a scan adding a cart item, a product or user
+// changed on another page) no longer refetch them. Re-subscribing here keeps
+// the shared entries active while this page is shown and refreshes any that
+// went stale while it was away.
+const orpc = useOrpc();
+useQuery(orpc.cart.getAll.queryOptions());
+useQuery(orpc.users.getAll.queryOptions());
+useQuery(orpc.products.getAll.queryOptions());
+useQuery(orpc.orders.getAll.queryOptions());
 
 const barcode = ref("");
 const comboOpen = ref(false);
