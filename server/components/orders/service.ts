@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, gte, lt } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { type Db, tables } from "~~/server/utils/drizzle";
-import { ValidationError } from "~~/server/utils/errors";
+import { NotFoundError, ValidationError } from "~~/server/utils/errors";
 import { TransactionService } from "~~/server/components/transactions/service";
 
 export class OrderService {
@@ -72,6 +72,47 @@ export class OrderService {
       tx.delete(tables.cartItems).run();
 
       return { ...order, items: orderItems, user: txnResult.user };
+    });
+  }
+
+  /**
+   * Undo a payment: delete the order with its items and its debit
+   * transaction, and give the money back — user, balance history, and
+   * summaries end up as if the order never happened.
+   */
+  async delete(uuid: string) {
+    return this.db.transaction((tx) => {
+      const order = tx
+        .select()
+        .from(tables.orders)
+        .where(eq(tables.orders.uuid, uuid))
+        .get();
+      if (!order) throw new NotFoundError("Order", uuid);
+
+      // The transaction records what was actually charged (negative amount);
+      // refund from it rather than the order's display amount.
+      const txn = tx
+        .select()
+        .from(tables.transactions)
+        .where(eq(tables.transactions.uuid, order.transactionUuid))
+        .get();
+
+      tx.delete(tables.orderItems)
+        .where(eq(tables.orderItems.orderUuid, uuid))
+        .run();
+      tx.delete(tables.orders).where(eq(tables.orders.uuid, uuid)).run();
+
+      if (txn) {
+        tx.delete(tables.transactions)
+          .where(eq(tables.transactions.uuid, txn.uuid))
+          .run();
+        tx.update(tables.users)
+          .set({ balance: sql`${tables.users.balance} - ${txn.amount}` })
+          .where(eq(tables.users.uuid, txn.userUuid))
+          .run();
+      }
+
+      return order;
     });
   }
 

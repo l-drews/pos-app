@@ -16,6 +16,12 @@ export const orderRouter = base.router({
       return await makeService(db).create(input.userUuid);
     }),
 
+  delete: base
+    .input(z.object({ uuid: z.uuid() }))
+    .handler(async ({ context: { db }, input }) => {
+      return await makeService(db).delete(input.uuid);
+    }),
+
   getAll: base.handler(async ({ context: { db } }) => {
     return await makeService(db).getAll();
   }),
