@@ -170,13 +170,9 @@ export class UserService {
   }
 
   async getByUuid(uuid: string) {
-    const user = await this.db
-      .select()
-      .from(tables.users)
-      .where(eq(tables.users.uuid, uuid))
-      .get();
-    if (!user) throw new NotFoundError("User", uuid);
-    return withImageUrl(user);
+    // Include the group like create/update responses do — consumers (e.g.
+    // the transaction dialog's user label) render it when present.
+    return this.getByUuidWithRelations(uuid);
   }
 
   async getByBarcode(barcode: string) {

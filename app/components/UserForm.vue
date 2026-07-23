@@ -68,6 +68,16 @@ const image = ref<File | null>(null);
 const preview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
+// The date input only accepts "YYYY-MM-DD", but callers pass birthDate as it
+// arrives from their query — a Date or an ISO datetime string. Normalize here
+// so the field pre-fills no matter which page opened the form. Dates are
+// stored as UTC midnight, so the UTC date is the right one to show.
+function toDateInput(value: unknown): string | null {
+  if (!value) return null;
+  const d = value instanceof Date ? value : new Date(value as string);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
 watch(active, (val) => {
   if (val) {
     image.value = null;
@@ -78,7 +88,7 @@ watch(active, (val) => {
       user.value = {
         firstName: props.selected.firstName,
         lastName: props.selected.lastName,
-        birthDate: props.selected.birthDate,
+        birthDate: toDateInput(props.selected.birthDate),
         groupUuid: props.selected.groupUuid,
         generateBarcode: false,
         barcode: props.selected.barcode ?? "",

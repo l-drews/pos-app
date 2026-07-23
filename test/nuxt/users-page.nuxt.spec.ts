@@ -13,7 +13,7 @@ const { orpc, createMock, updateMock } = vi.hoisted(() => {
       lastName: "Abel",
       balance: 50,
       barcode: "95700001",
-      birthDate: "2010-01-01",
+      birthDate: "2010-01-01T00:00:00.000Z",
       group: { name: "Blue" },
     },
     {
@@ -22,7 +22,7 @@ const { orpc, createMock, updateMock } = vi.hoisted(() => {
       lastName: "Meier",
       balance: 500,
       barcode: "95700002",
-      birthDate: "2011-05-05",
+      birthDate: "2011-05-05T00:00:00.000Z",
       group: { name: "Red" },
     },
     {
@@ -31,7 +31,7 @@ const { orpc, createMock, updateMock } = vi.hoisted(() => {
       lastName: "Zorn",
       balance: 200,
       barcode: "95700003",
-      birthDate: "2009-03-03",
+      birthDate: "2009-03-03T00:00:00.000Z",
       group: null,
     },
   ];
@@ -171,6 +171,13 @@ describe("users page edit dialog", () => {
   it("edits an existing user's barcode", async () => {
     const barcodeInput = await openEditDialog("Anna");
     expect(barcodeInput.value).toBe("95700002");
+
+    // The date field must be prefilled even though the users list delivers
+    // birthDate as an ISO datetime, not the input's "YYYY-MM-DD" format.
+    const birthdateInput = document.querySelector(
+      "#user-birthdate",
+    ) as HTMLInputElement;
+    expect(birthdateInput.value).toBe("2011-05-05");
 
     barcodeInput.value = "95709999";
     barcodeInput.dispatchEvent(new Event("input", { bubbles: true }));

@@ -21,19 +21,6 @@ const totalSpent = computed(() =>
   (orders.value ?? []).reduce((sum: number, o: any) => sum + (o.amount ?? 0), 0),
 );
 
-// The edit form's date input expects a "YYYY-MM-DD" string, but birthDate
-// arrives as a Date — normalize it so the field pre-fills when editing.
-const selectedUser = computed(() => {
-  if (!user.value) return null;
-  const b = (user.value as any).birthDate;
-  let birthDate: string | null = null;
-  if (b) {
-    const d = b instanceof Date ? b : new Date(b);
-    if (!isNaN(d.getTime())) birthDate = d.toISOString().slice(0, 10);
-  }
-  return { ...user.value, birthDate };
-});
-
 const editOpen = ref(false);
 const transactionOpen = ref(false);
 const withdrawConfirm = ref(false);
@@ -109,10 +96,10 @@ function onDeleteConfirm() {
 <template>
   <section class="container mx-auto p-4 space-y-4">
     <UserForm
-      v-if="selectedUser"
+      v-if="user"
       v-model:active="editOpen"
       :title="$t('users.editTitle')"
-      :selected="(selectedUser as any)"
+      :selected="(user as any)"
       @on-confirm="onEditConfirm"
     />
     <ConfirmDialog
