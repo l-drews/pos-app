@@ -30,3 +30,6 @@ test-results/
 # Electron
 electron/dist/
 release/
+
+# vitest coverage output
+coverage/
