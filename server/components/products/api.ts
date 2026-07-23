@@ -12,7 +12,7 @@ export const productRouter = base.router({
     .input(
       z.object({
         name: z.string().min(1),
-        price: z.int().min(0),
+        price: z.int(),
         // "" (or whitespace) means "no barcode" and is stored as NULL —
         // never as "", which would collide on the unique constraint.
         barcode: z
@@ -55,7 +55,7 @@ export const productRouter = base.router({
       z.object({
         uuid: z.uuid(),
         name: z.string().min(1).optional(),
-        price: z.int().min(0).optional(),
+        price: z.int().optional(),
         // Absent = keep, ""/null = clear (normalized to NULL, never "").
         barcode: z
           .string()

@@ -70,7 +70,7 @@ function onConfirm() {
       <DialogFooter>
         <Button variant="outline" @click="onCancel()">{{ cancelText ?? $t("common.cancel") }}</Button>
         <Button
-          :disabled="!product.name.trim() || product.price <= 0"
+          :disabled="!product.name.trim() || product.price === 0"
           @click="onConfirm()"
         >
           {{ confirmText ?? $t("common.save") }}
