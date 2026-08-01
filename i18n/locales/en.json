@@ -50,6 +50,8 @@
     "birthdate": "Birthdate",
     "totalLabel": "Total:",
     "todaysTotal": "Today's total:",
+    "todaysOrders": "Today's orders:",
+    "noOrdersToday": "No orders today",
     "pay": "Pay"
   },
   "users": {

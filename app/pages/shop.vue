@@ -25,6 +25,29 @@ useQuery(orpc.users.getAll.queryOptions());
 useQuery(orpc.products.getAll.queryOptions());
 useQuery(orpc.orders.getAll.queryOptions());
 
+// The selected user's orders (with items) for the sidebar's daily order list.
+// Page-level rather than in the store so invalidations keep refetching it
+// (see the subscription note above); paying invalidates the orders key.
+const { data: currentUserOrders } = useQuery({
+  ...orpc.orders.getByUser.queryOptions({
+    input: () => ({ userUuid: shop.currentUser?.uuid ?? "" }),
+  }),
+  enabled: () => !!shop.currentUser,
+});
+
+const todaysOrders = computed(() => {
+  const today = new Date().toDateString();
+  return ((currentUserOrders.value ?? []) as any[]).filter(
+    (o) => new Date(o.createdAt).toDateString() === today,
+  );
+});
+
+function orderItemsSummary(order: any) {
+  return (order.items ?? [])
+    .map((i: any) => `${i.count}× ${i.product?.name ?? "?"}`)
+    .join(", ");
+}
+
 const barcode = ref("");
 const comboOpen = ref(false);
 
@@ -304,6 +327,23 @@ const userData = computed(() => [
               <span class="text-right font-medium">{{ item.value }}</span>
             </li>
           </ul>
+          <div v-if="shop.currentUser" class="pt-4">
+            <span class="text-muted-foreground">{{ $t("shop.todaysOrders") }}</span>
+            <ul class="mt-2 max-h-56 space-y-2 overflow-y-auto">
+              <li v-if="!todaysOrders.length" class="text-sm text-muted-foreground">
+                {{ $t("shop.noOrdersToday") }}
+              </li>
+              <li v-for="order in todaysOrders" :key="order.uuid" class="text-sm">
+                <div class="flex flex-row justify-between gap-4">
+                  <span class="text-muted-foreground">{{ formatTime(order.createdAt) }}</span>
+                  <span class="text-right font-medium">{{ formatCents(order.amount ?? 0) }}</span>
+                </div>
+                <div class="text-xs text-muted-foreground">
+                  {{ orderItemsSummary(order) }}
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
         <div>
           <div class="flex flex-row justify-between pb-2">
