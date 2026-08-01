@@ -49,6 +49,17 @@ export function parseLocalISODate(value: string): Date | null {
 }
 
 /**
+ * Format an ISO datetime string as HH:mm (German locale).
+ * Example: "2025-04-25T14:30:00Z" → "14:30"
+ */
+export function formatTime(value: Date | string | null | undefined): string {
+  if (!value) return "-";
+  const d = value instanceof Date ? value : new Date(value);
+  if (isNaN(d.getTime())) return "-";
+  return d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+}
+
+/**
  * Format an ISO datetime string as DD.MM.YYYY HH:mm (German locale).
  * Example: "2025-04-25T14:30:00Z" → "25.04.2025, 14:30"
  */

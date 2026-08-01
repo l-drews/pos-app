@@ -32,6 +32,7 @@ const { orpc, CART, addItemMock } = vi.hoisted(() => {
     products: { getAll: query("products", () => []), key: () => ["products"] },
     orders: {
       getAll: query("orders", () => []),
+      getByUser: query("orders-by-user", () => []),
       key: () => ["orders"],
       create: mutation(),
     },

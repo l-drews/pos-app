@@ -50,6 +50,8 @@
     "birthdate": "Geburtsdatum",
     "totalLabel": "Summe:",
     "todaysTotal": "Tagessumme:",
+    "todaysOrders": "Heutige Bestellungen:",
+    "noOrdersToday": "Keine Bestellungen heute",
     "pay": "Bezahlen"
   },
   "users": {
