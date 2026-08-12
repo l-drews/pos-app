@@ -32,6 +32,34 @@ const stats = computed(() => {
   };
 });
 
+// Hourly bins from the first to the last order of the day, zero-filled in
+// between, feeding the two time charts (revenue and order count share bins).
+const hourlyBuckets = computed(() => {
+  const list = (orders.value ?? []) as any[];
+  if (!list.length) return [];
+  const hours = list.map((o) => new Date(o.createdAt).getHours());
+  const first = Math.min(...hours);
+  const last = Math.max(...hours);
+  const bins = Array.from({ length: last - first + 1 }, (_, i) => ({
+    label: `${String(first + i).padStart(2, "0")}:00`,
+    amount: 0,
+    count: 0,
+  }));
+  for (const order of list) {
+    const bin = bins[new Date(order.createdAt).getHours() - first]!;
+    bin.amount += order.amount ?? 0;
+    bin.count += 1;
+  }
+  return bins;
+});
+
+const revenueBuckets = computed(() =>
+  hourlyBuckets.value.map((b) => ({ label: b.label, value: b.amount })),
+);
+const countBuckets = computed(() =>
+  hourlyBuckets.value.map((b) => ({ label: b.label, value: b.count })),
+);
+
 interface TopProduct {
   uuid: string;
   name: string;
@@ -140,6 +168,17 @@ function openProduct(product: TopProduct) {
         <div class="rounded-lg border bg-card p-4">
           <p class="text-sm text-muted-foreground">{{ $t("summary.totalRevenue") }}</p>
           <p class="text-2xl font-bold">{{ formatCents(stats.total) }}</p>
+        </div>
+      </div>
+
+      <div v-if="hourlyBuckets.length" class="grid gap-4 lg:grid-cols-2">
+        <div class="rounded-lg border bg-card p-4">
+          <h2 class="pb-3 text-lg font-medium">{{ $t("summary.revenueOverDay") }}</h2>
+          <HourlyBarChart :buckets="revenueBuckets" :format="formatCents" />
+        </div>
+        <div class="rounded-lg border bg-card p-4">
+          <h2 class="pb-3 text-lg font-medium">{{ $t("summary.ordersOverDay") }}</h2>
+          <HourlyBarChart :buckets="countBuckets" :format="(v: number) => String(v)" />
         </div>
       </div>
 

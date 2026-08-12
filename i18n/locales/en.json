@@ -133,6 +133,8 @@
     "title": "Daily summary",
     "averageOrder": "Average order",
     "totalRevenue": "Total revenue",
+    "revenueOverDay": "Revenue over the day",
+    "ordersOverDay": "Orders over the day",
     "topProducts": "Top products",
     "topCustomers": "Top customers",
     "spent": "Spent",
