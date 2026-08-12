@@ -133,6 +133,8 @@
     "title": "Tagesübersicht",
     "averageOrder": "Durchschnittliche Bestellung",
     "totalRevenue": "Gesamtumsatz",
+    "revenueOverDay": "Umsatz im Tagesverlauf",
+    "ordersOverDay": "Bestellungen im Tagesverlauf",
     "topProducts": "Top-Produkte",
     "topCustomers": "Top-Kunden",
     "spent": "Ausgegeben",
