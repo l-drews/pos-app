@@ -161,16 +161,9 @@ function exportUsers() {
       ].join(";"),
     );
   }
-  // The BOM makes Excel detect UTF-8 — without it, Excel assumes ANSI and
-  // garbles umlauts. The importer strips it, so exports re-import cleanly.
-  const data = "\uFEFF" + lines.join("\n");
-  const el = document.createElement("a");
-  el.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(data));
-  el.setAttribute("download", "users.csv");
-  el.style.display = "none";
-  document.body.appendChild(el);
-  el.click();
-  document.body.removeChild(el);
+  // The importer strips the BOM downloadCsv prepends, so exports re-import
+  // cleanly.
+  downloadCsv("users.csv", lines.join("\n"));
 }
 </script>
 
