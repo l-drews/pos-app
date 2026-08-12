@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useQueryCache } from "@pinia/colada";
-import { RefreshCw } from "lucide-vue-next";
+import { Download, RefreshCw } from "lucide-vue-next";
 
 const orpc = useOrpc();
 const queryCache = useQueryCache();
@@ -39,15 +39,39 @@ const dailySummaries = computed<DailySummary[]>(() => {
 function refresh() {
   queryCache.invalidateQueries({ key: orpc.orders.key() });
 }
+
+// One CSV row per day with that day's combined totals — the table above,
+// chronological. Same CSV conventions as the other exports: ";" separator,
+// decimal-comma amounts.
+function exportAllSales() {
+  const euros = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
+  const lines = ["date;orders;average;revenue"];
+  for (const day of [...dailySummaries.value].reverse()) {
+    lines.push(
+      [formatDate(day.date), day.orderCount, euros(day.average), euros(day.total)].join(";"),
+    );
+  }
+  downloadCsv("sales.csv", lines.join("\n"));
+}
 </script>
 
 <template>
   <section class="container mx-auto p-4">
     <div class="flex justify-between items-center pb-4">
       <h1 class="text-xl font-semibold">{{ $t("summary.title") }}</h1>
-      <Button variant="outline" size="icon" @click="refresh()">
-        <RefreshCw class="size-4" />
-      </Button>
+      <div class="flex gap-2">
+        <Button
+          variant="outline"
+          :disabled="!dailySummaries.length"
+          @click="exportAllSales"
+        >
+          <Download class="mr-2 size-4" />
+          {{ $t("common.export") }}
+        </Button>
+        <Button variant="outline" size="icon" @click="refresh()">
+          <RefreshCw class="size-4" />
+        </Button>
+      </div>
     </div>
 
     <div class="rounded-lg border bg-card p-4">

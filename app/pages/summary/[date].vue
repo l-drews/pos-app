@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery } from "@pinia/colada";
-import { ArrowLeft } from "lucide-vue-next";
+import { ArrowLeft, Download } from "lucide-vue-next";
 
 const route = useRoute();
 const orpc = useOrpc();
@@ -67,7 +67,9 @@ interface TopProduct {
   revenue: number;
 }
 
-const topProducts = computed<TopProduct[]>(() => {
+// Every product sold that day with quantity and revenue, best-selling first —
+// the top-products table shows the head, the CSV export takes all of it.
+const productSales = computed<TopProduct[]>(() => {
   const byProduct = new Map<string, TopProduct>();
   for (const order of (orders.value ?? []) as any[]) {
     for (const item of order.items ?? []) {
@@ -83,10 +85,22 @@ const topProducts = computed<TopProduct[]>(() => {
       byProduct.set(uuid, entry);
     }
   }
-  return [...byProduct.values()]
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5);
+  return [...byProduct.values()].sort((a, b) => b.revenue - a.revenue);
 });
+
+const topProducts = computed<TopProduct[]>(() => productSales.value.slice(0, 5));
+
+// Same CSV conventions as the users export: ";" separator, decimal-comma
+// amounts, ";" stripped from free-text fields.
+function exportSales() {
+  const field = (value: string) => value.replace(/;/g, ",");
+  const euros = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
+  const lines = ["product;quantity;revenue"];
+  for (const product of productSales.value) {
+    lines.push([field(product.name), product.quantity, euros(product.revenue)].join(";"));
+  }
+  downloadCsv(`sales-${route.params.date}.csv`, lines.join("\n"));
+}
 
 interface TopUser {
   uuid: string;
@@ -143,9 +157,20 @@ function openProduct(product: TopProduct) {
         <ArrowLeft class="mr-2 size-4" />
         {{ $t("common.back") }}
       </Button>
-      <h1 class="text-xl font-semibold">
-        {{ day ? formatDate(day) : $t("summary.unknownDay") }}
-      </h1>
+      <div class="flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="!productSales.length"
+          @click="exportSales"
+        >
+          <Download class="mr-2 size-4" />
+          {{ $t("common.export") }}
+        </Button>
+        <h1 class="text-xl font-semibold">
+          {{ day ? formatDate(day) : $t("summary.unknownDay") }}
+        </h1>
+      </div>
     </div>
 
     <div v-if="!day" class="py-12 text-center text-muted-foreground">

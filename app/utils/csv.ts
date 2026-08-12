@@ -12,3 +12,18 @@ export function decodeCsvBuffer(buffer: ArrayBuffer): string {
     return new TextDecoder("windows-1252").decode(buffer);
   }
 }
+
+/**
+ * Trigger a client-side download of CSV text. The BOM makes Excel detect
+ * UTF-8 — without it, Excel assumes ANSI and garbles umlauts.
+ */
+export function downloadCsv(filename: string, csv: string) {
+  const data = "\uFEFF" + csv;
+  const el = document.createElement("a");
+  el.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(data));
+  el.setAttribute("download", filename);
+  el.style.display = "none";
+  document.body.appendChild(el);
+  el.click();
+  document.body.removeChild(el);
+}
